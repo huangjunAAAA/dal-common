@@ -1,0 +1,43 @@
+objects:
+    scan-pkg:
+        - com.dal.test.model
+data:
+    -
+        name: "TCountryCity_List1"
+        sql: "select city.city_id,country.country_id from city,country where city.country_id=country.country_id and city=? and country=?"
+        mode: "list"
+        cache: "auto"
+    -
+        name: "TActor_List1"
+        sql: "select actor_id from actor where first_name=?"
+        mode: "list"
+        cache: "memcache"
+    -
+        name: "TCity_List1"
+        sql: "select city_id,country_id from city where city=?"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TActor_List2"
+        sql: "select first_name from actor where actor_id in (:p0)"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TActor_List3"
+        sql: "select first_name,last_name,actor_id from actor where actor_id in (:p0)"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TCity_List4"
+        sql: "select city_id,country_id from city"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TActor_Map1"
+        sql: "select first_name,last_name,actor_id from actor where actor_id = ?"
+        mode: "map"
+        cache: "memcache"

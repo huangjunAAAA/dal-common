@@ -1,0 +1,5 @@
+dao:
+    config: "dao.yml"
+    memcache: "cache.cache.yml"
+datasource:
+    config: "datasource.yml"

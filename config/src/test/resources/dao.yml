@@ -1,0 +1,44 @@
+objects:
+    scan-pkg:
+        - com.boring.dal.com.model
+    defined:
+        - com.boring.dal.model2.DefinedModel1
+cache:
+    dirty: 100
+    panic: 50
+data:
+    -
+        name: "PModel_List1"
+        sql: "select id from p_table1 where name=?"
+        mode: "list"
+        cache: "memcache"
+    -
+        name: "DModel_List1"
+        sql: "select id from d_table1 where app=?"
+        mode: "list"
+        cache: "memcache"
+    -
+        name: "DModel_PModel_List1"
+        sql: "select t1.id from d_table1 t1, p_table1 t2 where t1.app=? and t1.rcode = t2.url and t2.name=? order by app,url desc"
+        mode: "list"
+        cache: "redis"
+    -
+        name: "DModel_Map1"
+        sql: "select id from d_table1 where app=?"
+        mode: "map"
+        cache: "memcache"
+    -
+        name: "MIX_Map1"
+        sql: "select t1.id from d_table1 t1,k_table t2 where t1.app=? and t2.p=?"
+        mode: "map"
+        cache: "memcache"
+    -
+        name: "DModel_Map2"
+        sql: "select id from d_table1 where app=(:p0)"
+        mode: "map"
+        cache: "memcache"
+    -
+        name: "DModel_Map3"
+        sql: "select id from d_table1 where app in (:p0)"
+        mode: "map"
+        cache: "memcache"

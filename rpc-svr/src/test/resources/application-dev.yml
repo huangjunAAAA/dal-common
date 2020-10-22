@@ -1,0 +1,18 @@
+spring:
+    redis:
+        database: 0
+        host: 127.0.0.1
+        port: 6379
+        password:
+        timeout: 6000
+    application:
+        name: dao-server
+    cloud:
+        nacos:
+            discovery:
+                server-addr: "127.0.0.1:8848"
+                service: ${spring.application.name}
+                enabled: true
+server:
+  port: 9429
+

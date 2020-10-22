@@ -1,0 +1,43 @@
+objects:
+    scan-pkg:
+        - com.cache.test.model
+
+cache:
+    dirty: 100
+    panic: 50
+
+data:
+    -
+        name: "TActor_List1"
+        sql: "select actor_id from actor where last_name=?"
+        mode: "list"
+        cache: "memcache"
+    -
+        name: "TCity_List1"
+        sql: "select city_id,country_id from city where city=?"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TActor_List2"
+        sql: "select first_name from actor where actor_id in (:p0)"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TActor_List3"
+        sql: "select first_name,last_name,actor_id from actor where actor_id in (:p0)"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TCity_List4"
+        sql: "select city_id,city from city where country_id=?"
+        mode: "list"
+        cache: "memcache"
+
+    -
+        name: "TActor_Map1"
+        sql: "select first_name,last_name,actor_id from actor where actor_id = ?"
+        mode: "map"
+        cache: "memcache"

@@ -1,0 +1,53 @@
+dataSources:
+  ds_master: !!com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/sakila?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: k8st
+    initialSize: 5
+    minIdle: 5
+    maxActive: 50
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 100
+    filters: stat,wall,log4j2
+  ds_slave0: !!com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/sakila?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: k8st
+    initialSize: 5
+    minIdle: 5
+    maxActive: 50
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 100
+    filters: stat,wall,log4j2
+  ds_slave1: !!com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/sakila?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: k8st
+    initialSize: 5
+    minIdle: 5
+    maxActive: 50
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 100
+    filters: stat,wall,log4j2
+
+masterSlaveRule:
+  name: ds_ms
+  masterDataSourceName: ds_master
+  slaveDataSourceNames:
+    - ds_slave0
+    - ds_slave1
+
+props:
+  sql-show: false

@@ -1,0 +1,4 @@
+dao:
+    config: "dao.yml"
+datasource:
+    config: "datasource.yml"

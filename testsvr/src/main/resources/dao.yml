@@ -1,0 +1,31 @@
+objects:
+    scan-pkg:
+        - com.boring.dal.test.model
+data:
+    -
+        name: "TCountryCity_List1"
+        sql: "select city.city_id,country.country_id from city,country where city.country_id=country.country_id and city=? and country=?"
+        mode: "list"
+        cache: "auto"
+
+    -
+        name: "TCountryCity_map1"
+        sql: "select city.city_id,city from city where city.city_id=?"
+        mode: "map"
+        cache: "auto"
+
+    -
+        name: "TCountryCity_map2"
+        sql: "select city from city where city.city_id=?"
+        mode: "map"
+        cache: "auto"
+
+    -
+        name: "TCountryCity_List2"
+        sql: "select city from city where city.country_id=?"
+        mode: "map"
+        cache: "auto"
+
+cache:
+    dirty: 100
+    panic: 50

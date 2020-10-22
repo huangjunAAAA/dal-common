@@ -1,0 +1,4 @@
+FROM java8:v202
+EXPOSE 9429
+COPY testsvr-1.0.0.jar /data/
+CMD ["java", "-jar","/data/testsvr-1.0.0.jar"]
