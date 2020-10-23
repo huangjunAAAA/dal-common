@@ -24,6 +24,8 @@ public interface RealmCache {
 
     void updateEntity(String id, Object entity, Object oldEntity);
 
+    void updateEntityIfNotPresent(String id, Object entity);
+
     void saveNewEntity(String id, Object entity);
 
     <T> List<T> batchGetEntity(Class<T> clazz, List idList);

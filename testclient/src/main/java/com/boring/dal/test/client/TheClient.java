@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -35,8 +33,8 @@ public class TheClient {
 
     @GetMapping("/testclient")
     public String test() throws Exception {
-        List<Object[]> cc = tCityDaoWrapper.getTCountryCity_List1("China", "client111", 0, 4);
-        TCity2 city = tCityDaoWrapper.get(47);
+//        List<Object[]> cc = tCityDaoWrapper.getTCountryCity_List1("China", "client111", 0, 4);
+        TCity2 city = tCityDaoWrapper.get(47,48L,49d);
         city.setCity("client111");
         tCityDaoWrapper.update(city);
         List<Object[]> cc2 = tCityDaoWrapper.getTCountryCity_List1("India", "client111", 0, 4);
@@ -46,7 +44,7 @@ public class TheClient {
     @GetMapping("/testclient2")
     public String test2() throws Exception {
         List<Object[]> cc = tCityDaoWrapper.getTCountryCity_List1("China", "client222", 0, 4);
-        TCity2 city = tCityDaoWrapper.get(47);
+        TCity2 city = tCityDaoWrapper.get(47,null,null);
         city.setCity("client222");
         tCityDaoWrapper.update(city);
         List<Object[]> cc2 = tCityDaoWrapper.getTCountryCity_List1("India", "client222", 0, 4);
@@ -91,14 +89,7 @@ public class TheClient {
         Integer c = tCityDaoWrapper.countTCountryCity_List1("China", "Binzhou");
         ret.append("count:"+c).append("<br>");
 
-        ReentrantReadWriteLock l=new ReentrantReadWriteLock();
-        CountDownLatch countDownLatch;
-        Phaser p;
-
-        Exchanger e;
-        e.exchange(null);
-        ArrayBlockingQueue b;
-        TCity2 cc = tCityDaoWrapper.get(89);
+        TCity2 cc = tCityDaoWrapper.get(89,null,null);
         ret.append("get:89"+new Gson().toJson(cc)).append("<br>");
 
         List<Object[]> tlst = tCityDaoWrapper.getTCountryCity_List1("China", "Binzhou", 0, 4);

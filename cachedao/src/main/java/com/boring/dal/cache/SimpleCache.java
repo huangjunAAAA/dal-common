@@ -19,12 +19,6 @@ public interface SimpleCache {
 
     void setRaw(String region, String key, Object content, int expire);
 
-    void casEntity(String key, Object obj, Object expected);
-
-    void casEntity(String key, Object obj, int expire, Object expected);
-
-    void casRaw(String region, String key, Object content, int expire, Object expected);
-
     long incr(String region, String key, long delta);
 
     long decr(String region, String key, long delta);
@@ -32,6 +26,8 @@ public interface SimpleCache {
     <T> List<T> batchGetEntity(Class<T> clazz, List idList);
 
     void deleteKey(String region, String key);
+
+    void setIfNotPresent(String region,String key, Object content, int expire);
 
     class CacheKey {
         public final String region;

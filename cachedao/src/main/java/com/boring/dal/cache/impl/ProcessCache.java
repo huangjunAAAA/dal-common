@@ -33,10 +33,16 @@ public class ProcessCache implements RealmCache {
     private static final ConcurrentHashMap<SimpleCache.CacheKey, Long> processDirty = new ConcurrentHashMap<>();
     @Resource
     protected DataAccessConfig dataAccessConfig;
-    @Autowired
-    private SimpleCache simpleCache;
+
+    @Resource
+    private SimpleCache xMemCache;
+
+    @Resource
+    private SimpleCache redisCache;
+
     @Autowired
     private TxFlusher txFlusher;
+    
     @Resource
     private CacheHelper cacheHelper;
 
@@ -44,7 +50,7 @@ public class ProcessCache implements RealmCache {
     public void invalidateListData(DataEntry de, String key) {
         checkKeySanity(key);
         txFlusher.markDirty(de.getName(), key);
-        simpleCache.deleteKey(de.getName(), key);
+        xMemCache.deleteKey(de.getName(), key);
     }
 
     @Override
@@ -52,7 +58,7 @@ public class ProcessCache implements RealmCache {
         if (logger.isDebugEnabled())
             logger.debug("invalidate entity:" + GsonUtil.toJson(entity));
         txFlusher.markDirty(entity.getClass().getTypeName(), id.toString());
-        simpleCache.deleteKey(entity.getClass().getTypeName(), id.toString());
+        redisCache.deleteKey(entity.getClass().getTypeName(), id.toString());
         // update related list/map
         List<DataEntry> delst = dataAccessConfig.getClassRelatedListInfo(entity.getClass());
         if (logger.isDebugEnabled())
@@ -62,7 +68,7 @@ public class ProcessCache implements RealmCache {
             String key = cacheHelper.getDataEntryCacheKeyWithEntities(de, entity);
 
             invalidateListData(de, key);
-            simpleCache.deleteKey(de.getName(), key);
+            xMemCache.deleteKey(de.getName(), key);
         }
     }
 
@@ -97,7 +103,7 @@ public class ProcessCache implements RealmCache {
                 return Constants.SLAVE_DIRTY;
             return Constants.CACHE_DIRTY;
         } else {
-            ts = simpleCache.get(Constants.CACHE_UPDATING_PREFIX + ckey.region, ckey.key, Long.class);
+            ts = xMemCache.get(Constants.CACHE_UPDATING_PREFIX + ckey.region, ckey.key, Long.class);
             if (logger.isDebugEnabled())
                 logger.debug("inspectCache:" + ckey.region + "," + ckey.key + ", val in memcached:" + ts + (ts != null ? ", diff:" + (System.currentTimeMillis() - ts) : ""));
             if (ts == null)
@@ -117,18 +123,18 @@ public class ProcessCache implements RealmCache {
     @Override
     public void setListData(String listName, String key, Object data) {
         checkKeySanity(key);
-        simpleCache.setRaw(listName, key, data, 0);
+        xMemCache.setRaw(listName, key, data, 0);
     }
 
     @Override
     public <T> T getListData(String listName, String key, Supplier<T> s) {
         checkKeySanity(key);
-        return simpleCache.get(listName, key, s);
+        return xMemCache.get(listName, key, s);
     }
 
     @Override
     public <T> T getEntity(String id, Class<T> tClass) {
-        Object mxid = simpleCache.get(tClass.getTypeName(), Constants.MAXID_KEY, Object.class);
+        Object mxid = redisCache.get(tClass.getTypeName(), Constants.MAXID_KEY, Object.class);
         if (logger.isDebugEnabled()) logger.debug(tClass.getTypeName() + " max id:" + mxid);
         if (mxid != null && mxid instanceof Long) {
             Long mxidl = (Long) mxid;
@@ -136,7 +142,7 @@ public class ProcessCache implements RealmCache {
             if (idl > mxidl)
                 return (T) SimpleCache.NullObject;
         }
-        return simpleCache.getEntity(id.toString(), tClass);
+        return redisCache.getEntity(id.toString(), tClass);
     }
 
     @Override
@@ -144,7 +150,7 @@ public class ProcessCache implements RealmCache {
         if (logger.isDebugEnabled())
             logger.debug("updateEntity " + entity.getClass().getTypeName() + ":" + id + "\n" + GsonUtil.toJson(entity) + (oldEntity != null ? ("\noriginal:" + GsonUtil.toJson(oldEntity)) : ""));
         // update entity cache
-        simpleCache.setEntity(id.toString(), entity);
+        redisCache.setEntity(id.toString(), entity);
         if (oldEntity == null)
             return;
 
@@ -176,11 +182,16 @@ public class ProcessCache implements RealmCache {
     }
 
     @Override
+    public void updateEntityIfNotPresent(String id, Object entity) {
+        redisCache.setIfNotPresent(entity.getClass().getTypeName(),id,entity,0);
+    }
+
+    @Override
     public void saveNewEntity(String id, Object entity) {
         if (logger.isDebugEnabled())
             logger.debug("saveNewEntity " + entity.getClass().getTypeName() + ":" + id + "\n" + GsonUtil.toJson(entity));
         // update entity cache
-        simpleCache.setEntity(id.toString(), entity);
+        redisCache.setEntity(id.toString(), entity);
 
         // update related list/map
         List<DataEntry> delst = dataAccessConfig.getClassRelatedListInfo(entity.getClass());
@@ -193,12 +204,12 @@ public class ProcessCache implements RealmCache {
         }
 
         // update max id
-        simpleCache.setRaw(entity.getClass().getTypeName(), Constants.MAXID_KEY, id, 0);
+        xMemCache.setRaw(entity.getClass().getTypeName(), Constants.MAXID_KEY, id, 0);
     }
 
     @Override
     public <T> List<T> batchGetEntity(Class<T> clazz, List idList) {
-        return simpleCache.batchGetEntity(clazz, idList);
+        return redisCache.batchGetEntity(clazz, idList);
     }
 
     @Component

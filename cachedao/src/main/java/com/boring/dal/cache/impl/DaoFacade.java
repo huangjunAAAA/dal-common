@@ -238,7 +238,7 @@ public class DaoFacade implements ComprehensiveDao {
         }
         if (obj == null) {
             obj = entityDao.get(id, clazz);
-            realmCache.updateEntity(id.toString(), obj, null);
+            realmCache.updateEntityIfNotPresent(id.toString(), obj);
             if (logger.isDebugEnabled())
                 logger.debug("get:" + id + ", class:" + clazz.getTypeName() + ", cache empty.");
         } else {

@@ -93,12 +93,11 @@ public class XMemCache implements SimpleCache {
         }
     }
 
-    @Override
+
     public void casEntity(String key, Object obj, Object expected) {
         casEntity(key, obj, 0, expected);
     }
 
-    @Override
     public void casEntity(String id, Object obj, int expire, Object expected) {
         casRaw(obj.getClass().getTypeName(), id, obj, expire, expected);
     }
@@ -183,5 +182,10 @@ public class XMemCache implements SimpleCache {
         } catch (Exception e) {
             logger.error(e, e);
         }
+    }
+
+    @Override
+    public void setIfNotPresent(String region, String key, Object content, int expire) {
+
     }
 }

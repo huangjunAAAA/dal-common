@@ -17,7 +17,7 @@ public class TCityDaoWrapper {
     @Autowired
     private RemoteBasicDao remoteBasicDao;
 
-    public TCity2 get(Object id) throws Exception {
+    public TCity2 get(Object id,Object id2,Object id3) throws Exception {
         RpcRequest request = new RpcRequest();
         request.clazz = "com.boring.dal.test.model.TCity2";
         request.id = id;

@@ -12,11 +12,13 @@ import net.rubyeye.xmemcached.utils.AddrUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Iterator;
 
 @Configuration
-public class MemcachedConf {
+public class CacheConf {
 
     @Value("${dao.memcache}")
     private String mcconfig;
@@ -44,5 +46,12 @@ public class MemcachedConf {
         builder.setSessionLocator(new ElectionMemcachedSessionLocator());
         MemcachedClient mc = builder.build();
         return mc;
+    }
+
+    @Bean(name = "cacheRedis")
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory){
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+        return template;
     }
 }

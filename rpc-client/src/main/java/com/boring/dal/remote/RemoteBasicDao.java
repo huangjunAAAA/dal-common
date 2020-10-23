@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@FeignClient(name = "dao-server", fallback = Fallback.class)
+@FeignClient(name = "dao-server", fallback = Fallback.class,configuration = {RpcFeignCfg.class})
 @RequestMapping("/remoteDao")
 public interface RemoteBasicDao {
     @RequestMapping("/getDataListEntity")
