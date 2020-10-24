@@ -1,7 +1,6 @@
 package com.rpc.client;
 
 
-import com.rpc.test.model.TCity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RpcClientTest {
 
     @Autowired
-    private TCityDaoWrapper tCityDaoWrapper;
+    private TestAutoRpc testAutoRpc;
 
     public static void main(String[] args) throws Exception {
         ConfigurableApplicationContext context = SpringApplication.run(RpcClientTest.class, args);
@@ -28,7 +27,7 @@ public class RpcClientTest {
 
     @GetMapping("/testclient")
     public String test() throws Exception {
-        TCity city = tCityDaoWrapper.get(16);
+        Object city = testAutoRpc.get(16);
         return "testok:" + city;
     }
 }

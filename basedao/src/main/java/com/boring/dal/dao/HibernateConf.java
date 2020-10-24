@@ -40,9 +40,9 @@ public class HibernateConf {
     private TxFlusher txCleaner;
 
     @Bean
-    public LocalSessionFactoryBean sessionFactory() throws Exception {
+    public LocalSessionFactoryBean sessionFactory(DataSource ds) throws Exception {
         LocalSessionFactoryBean sessionFactory = new LocalSessionFactoryBean();
-        sessionFactory.setDataSource(dataSource());
+        sessionFactory.setDataSource(ds);
         List<Class> clst = dataAccessConfig.loadAllClazz();
         StringBuilder log = new StringBuilder("\n");
         for (Iterator<Class> iterator = clst.iterator(); iterator.hasNext(); ) {
@@ -56,8 +56,7 @@ public class HibernateConf {
     }
 
     @Bean
-    public DataSource dataSource() throws Exception {
-        YamlRootMasterSlaveConfiguration config = shardingConfig();
+    public DataSource dataSource(YamlRootMasterSlaveConfiguration config) throws Exception {
         return MasterSlaveDataSourceFactory.createDataSource(config.getDataSources(), new MasterSlaveRuleConfigurationYamlSwapper().swap(config.getMasterSlaveRule()), config.getProps());
 
     }
@@ -71,7 +70,7 @@ public class HibernateConf {
     }
 
     @Bean
-    public PlatformTransactionManager hibernateTransactionManager() throws Exception {
+    public PlatformTransactionManager hibernateTransactionManager(LocalSessionFactoryBean sessionFactoryBean) throws Exception {
         HibernateTransactionManager transactionManager
                 = new HibernateTransactionManager() {
             @Override
@@ -81,7 +80,7 @@ public class HibernateConf {
                     txCleaner.txClean(transaction);
             }
         };
-        transactionManager.setSessionFactory(sessionFactory().getObject());
+        transactionManager.setSessionFactory(sessionFactoryBean.getObject());
 
         return transactionManager;
     }

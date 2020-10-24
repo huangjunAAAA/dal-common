@@ -42,7 +42,7 @@ public class ProcessCache implements RealmCache {
 
     @Autowired
     private TxFlusher txFlusher;
-    
+
     @Resource
     private CacheHelper cacheHelper;
 
@@ -57,7 +57,6 @@ public class ProcessCache implements RealmCache {
     public void invalidateEntity(Object id, Object entity) {
         if (logger.isDebugEnabled())
             logger.debug("invalidate entity:" + GsonUtil.toJson(entity));
-        txFlusher.markDirty(entity.getClass().getTypeName(), id.toString());
         redisCache.deleteKey(entity.getClass().getTypeName(), id.toString());
         // update related list/map
         List<DataEntry> delst = dataAccessConfig.getClassRelatedListInfo(entity.getClass());
@@ -219,8 +218,8 @@ public class ProcessCache implements RealmCache {
 
         private static final ScheduledExecutorService es = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
 
-        @Autowired
-        private SimpleCache simpleCache;
+        @Resource
+        private SimpleCache xMemCache;
 
         @Resource
         private DataAccessConfig dataAccessConfig;
@@ -236,7 +235,7 @@ public class ProcessCache implements RealmCache {
                 threadDirty.set(lst);
             }
             lst.add(ckey);
-            simpleCache.setRaw(Constants.CACHE_UPDATING_PREFIX + region, key, System.currentTimeMillis() , 1);
+            xMemCache.setRaw(Constants.CACHE_UPDATING_PREFIX + region, key, System.currentTimeMillis() , 1);
         }
 
         @Override
@@ -250,14 +249,14 @@ public class ProcessCache implements RealmCache {
             threadDirty.remove();
             for (Iterator<SimpleCache.CacheKey> iterator = lst.iterator(); iterator.hasNext(); ) {
                 SimpleCache.CacheKey key = iterator.next();
-                simpleCache.setRaw(Constants.CACHE_UPDATING_PREFIX + key.region, key.key, System.currentTimeMillis() , 1);
+                xMemCache.setRaw(Constants.CACHE_UPDATING_PREFIX + key.region, key.key, System.currentTimeMillis() , 1);
                 if (logger.isDebugEnabled())
                     logger.debug("txClean, mark key dirty:" + key.region + ", " + key.key);
             }
             es.schedule(() -> {
                 for (Iterator<SimpleCache.CacheKey> iterator = lst.iterator(); iterator.hasNext(); ) {
                     SimpleCache.CacheKey key = iterator.next();
-                    simpleCache.deleteKey(key.region, key.key);
+                    xMemCache.deleteKey(key.region, key.key);
                     processDirty.remove(key);
                     if (logger.isDebugEnabled())
                         logger.debug("txClean, cleansing:" + key.region + ", " + key.key);

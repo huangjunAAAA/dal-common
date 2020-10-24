@@ -6,10 +6,9 @@ import com.boring.dal.rpc.common.model.RpcRequest;
 import com.boring.dal.rpc.common.model.RpcResponse;
 import com.rpc.test.model.TCity;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-@Component
+
 public class TCityDaoWrapper {
     @Autowired
     private RemoteBasicDao remoteBasicDao;
