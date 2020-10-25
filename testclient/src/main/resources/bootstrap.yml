@@ -1,5 +1,5 @@
 client:
-    package: com.rpc.client
+    package: com.boring.dal.test.client.rpc
     skip:
         - com.rpc.client1
         - com.rpc.client2

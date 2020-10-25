@@ -5,19 +5,19 @@ import com.alibaba.fastjson.TypeReference;
 import com.boring.dal.remote.RemoteBasicDao;
 import com.boring.dal.rpc.common.model.RpcRequest;
 import com.boring.dal.rpc.common.model.RpcResponse;
+import com.boring.dal.test.client.rpc.TCityD2;
 import com.boring.dal.test.model.TCity2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-@Component
-public class TCityDaoWrapper {
+
+public class TCityDaoWrapper implements TCityD2 {
     @Autowired
     private RemoteBasicDao remoteBasicDao;
-
-    public TCity2 get(Object id,Object id2,Object id3) throws Exception {
+    
+    public TCity2 get(Object id) throws Exception {
         RpcRequest request = new RpcRequest();
         request.clazz = "com.boring.dal.test.model.TCity2";
         request.id = id;
@@ -27,6 +27,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, TCity2.class);
     }
 
+    
     public List<TCity2> batchGet(List idlst) throws Exception {
         RpcRequest request = new RpcRequest();
         request.clazz = "com.boring.dal.test.model.TCity2";
@@ -37,6 +38,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new TypeReference<List<TCity2>>(){});
     }
 
+    
     public void update(TCity2 city) throws Exception {
         RpcRequest request = new RpcRequest();
         request.clazz="com.boring.dal.test.model.TCity2";
@@ -44,6 +46,7 @@ public class TCityDaoWrapper {
         RpcResponse res = remoteBasicDao.update(request);
     }
 
+    
     public Integer save(TCity2 city) throws Exception {
         RpcRequest request = new RpcRequest();
         request.clazz="com.boring.dal.test.model.TCity2";
@@ -54,6 +57,7 @@ public class TCityDaoWrapper {
         return Integer.parseInt(res.result);
     }
 
+    
     public List<Integer> batchSave(List citylst) throws Exception {
         RpcRequest request = new RpcRequest();
         request.clazz="com.boring.dal.test.model.TCity2";
@@ -66,7 +70,8 @@ public class TCityDaoWrapper {
 
 
 
-    public List<Object[]> getTCountryCity_List1(String countryName,String cityName, Integer start, Integer count) throws Exception {
+    
+    public List<Object[]> getTCountryCity_List1(String countryName, String cityName, Integer start, Integer count) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List1";
         request.start = start;
@@ -78,7 +83,8 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new TypeReference<List<Object[]>>(){});
     }
 
-    public List<String> getTCountryCity_List1Forcity_id(String countryName,String cityName, Integer start, Integer count) throws Exception {
+    
+    public List<String> getTCountryCity_List1Forcity_id(String countryName, String cityName, Integer start, Integer count) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List1";
         request.start = start;
@@ -91,6 +97,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new TypeReference<List<String>>(){});
     }
 
+    
     public List<Object[]> getTCountryCity_List2(Integer countryId, Integer start, Integer count) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List2";
@@ -103,6 +110,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new TypeReference<List<Object[]>>(){});
     }
 
+    
     public List<String> getTCountryCity_List2Forcity(Integer countryId, Integer start, Integer count) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List2";
@@ -116,7 +124,8 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new TypeReference<List<String>>(){});
     }
 
-    public <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName,String cityName,Class<T> clazz, Integer start, Integer count) throws Exception {
+    
+    public <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName, String cityName, Class<T> clazz, Integer start, Integer count) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List1";
         request.start = start;
@@ -130,7 +139,8 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new TypeReference<List<T>>(){});
     }
 
-    public Integer countTCountryCity_List1(String countryName,String cityName) throws Exception {
+    
+    public Integer countTCountryCity_List1(String countryName, String cityName) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List1";
         request.params=new Object[]{cityName,countryName};
@@ -140,6 +150,7 @@ public class TCityDaoWrapper {
         return Integer.parseInt(res.result);
     }
 
+    
     public Integer getTCountryCity_Map1Forcity_id(Integer cityId) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_map1";
@@ -151,6 +162,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, Integer.class);
     }
 
+    
     public Object[] getTCountryCity_Map1(Integer cityId) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_map1";
@@ -161,6 +173,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, new Object[0].getClass());
     }
 
+    
     public String getTCountryCity_Map2Forcity(Integer cityId) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_map2";
@@ -172,6 +185,7 @@ public class TCityDaoWrapper {
         return JSON.parseObject(res.result, String.class);
     }
 
+    
     public Object[] getTCountryCity_Map2(Integer cityId) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_map2";

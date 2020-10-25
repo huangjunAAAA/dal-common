@@ -16,22 +16,32 @@ import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class RpcClientRegistry implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
-    private String clientPkg="com.rpc.client";
+    private String clientPkg;
 
     private ApplicationContext applicationContext;
+    private List<String> clientSkip;
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        String clientPkg=readProperty((ConfigurableEnvironment) applicationContext.getEnvironment(),"client.package");
-        Reflections reflections = new Reflections(clientPkg, new TypeAnnotationsScanner(), new SubTypesScanner());
+        clientPkg=readProperty((ConfigurableEnvironment) applicationContext.getEnvironment(),"client.package");
 
+        clientSkip = readCollectionProperty((ConfigurableEnvironment) applicationContext.getEnvironment(), "client.skip");
+        Map<String, String> skipClazz = clientSkip.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
+        Reflections reflections = new Reflections(clientPkg, new TypeAnnotationsScanner(), new SubTypesScanner());
         Set<Class<?>> beanClazzs = reflections.getTypesAnnotatedWith(AutoRpc.class);
         for (Class beanClazz : beanClazzs) {
+            if(skipClazz.containsKey(beanClazz.getTypeName()))
+                continue;
             BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(beanClazz);
             GenericBeanDefinition definition = (GenericBeanDefinition) builder.getRawBeanDefinition();
             definition.setFactoryBeanName("rpcClientFactory");
@@ -62,6 +72,23 @@ public class RpcClientRegistry implements BeanDefinitionRegistryPostProcessor, A
             }
         }
         throw new IllegalStateException("Unable to determine value of property " + pkey);
+    }
+
+    private List<String> readCollectionProperty(ConfigurableEnvironment environment, String pkey) {
+        ArrayList<String> ret=new ArrayList<>();
+        for (PropertySource<?> source : environment.getPropertySources()) {
+            if (source instanceof EnumerablePropertySource) {
+                EnumerablePropertySource<?> propertySource = (EnumerablePropertySource<?>) source;
+                for (String property : propertySource.getPropertyNames()) {
+                    if (property.matches(pkey+"\\[\\d+\\]"))
+                    {
+                        Object v = propertySource.getProperty(property);
+                        ret.add(v.toString());
+                    }
+                }
+            }
+        }
+        return ret;
     }
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

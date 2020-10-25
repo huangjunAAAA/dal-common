@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AutoRpcConf {
-    @Bean(name = "remoteBasicDao")
-    public BasicDaoProxy remoteBasicDao(RemoteBasicDao remoteBasicDao){
-        return new BasicDaoProxy(remoteBasicDao);
+    @Bean
+    public ReflectiveRemote remoteBasicDao(RemoteBasicDao remoteBasicDao){
+        return new ReflectiveRemote(remoteBasicDao);
     }
 
     @Bean(name = "rpcClientFactory")
-    public RpcClientFactory rpcClientFactory(BasicDaoProxy basicDaoProxy){
-        return new RpcClientFactory(basicDaoProxy);
+    public RpcClientFactory rpcClientFactory(ReflectiveRemote reflectiveRemote){
+        return new RpcClientFactory(reflectiveRemote);
     }
 }
