@@ -4,7 +4,7 @@ objects:
 data:
     -
         name: "TCountryCity_List1"
-        sql: "select city.city_id,country.country_id from city,country where city.country_id=country.country_id and city=? and country=?"
+        sql: "select city.city_id,country.country_id from city,country where city.country_id=country.country_id  and country=?and city=?"
         mode: "list"
         cache: "auto"
 
