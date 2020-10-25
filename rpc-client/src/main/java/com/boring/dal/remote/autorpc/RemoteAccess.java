@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 public @interface RemoteAccess {
     String remote() default "";
     String targetList() default "";
+    int idx() default 0;
     Class<?> before() default void.class;
     Class<?> after() default void.class;
 }

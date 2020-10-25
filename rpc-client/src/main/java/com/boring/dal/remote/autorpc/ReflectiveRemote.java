@@ -27,11 +27,12 @@ public class ReflectiveRemote implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         RemoteAccess ra = method.getAnnotation(RemoteAccess.class);
         if(ra==null)
-            throw new RuntimeException("missin Annotation @RemoteAccess");
+            throw new RuntimeException("missing Annotation @RemoteAccess");
         String rname = ra.remote();
         if(StringUtils.isEmpty(rname))
             rname=method.getName();
         String listname=ra.targetList();
+        int idx=ra.idx();
         switch (rname){
             case "get":{
                 return get(args[0],method.getReturnType());
@@ -59,17 +60,17 @@ public class ReflectiveRemote implements InvocationHandler {
                 ParameterizedType rt = (ParameterizedType) method.getAnnotatedReturnType().getType();
                 Class<?> clazz = Class.forName(rt.getActualTypeArguments()[0].getTypeName());
                 Object[] actualargs = Arrays.copyOfRange(args, 0, args.length - 2);
-                return getDataListSingle(listname, actualargs, (Integer) args[args.length - 2], (Integer) args[args.length - 1],clazz);
+                return getDataListSingle(listname, actualargs, idx,(Integer) args[args.length - 2], (Integer) args[args.length - 1],clazz);
             }
             case "getDataListEntity": {
                 Object[] actualargs = Arrays.copyOfRange(args, 0, args.length - 3);
-                return getDataListEntity(listname, actualargs, (Class) args[args.length - 3],(Integer) args[args.length - 2], (Integer) args[args.length - 1]);
+                return getDataListEntity(listname, actualargs, (Class) args[args.length - 3],idx,(Integer) args[args.length - 2], (Integer) args[args.length - 1]);
             }
             case "countDataList": {
                 return countDataList(listname, args);
             }
             case "getDataMapSingle": {
-                return getDataMapSingle(listname, args);
+                return getDataMapSingle(listname, args,idx);
             }
             case "getDataMapMulti": {
                 return getDataMapMulti(listname, args);
@@ -141,12 +142,12 @@ public class ReflectiveRemote implements InvocationHandler {
         return JSON.parseObject(res.result, new TypeReference<List<Object[]>>(){});
     }
 
-    public List getDataListSingle(String listname, Object[] args, Integer start, Integer count,Class<?> clazz) throws Exception {
+    public List getDataListSingle(String listname, Object[] args, Integer idx, Integer start, Integer count,Class<?> clazz) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = listname;
         request.start = start;
         request.count= count;
-        request.colIdx=0;
+        request.colIdx=idx;
         request.params=args;
         RpcResponse res = remoteBasicDao.getDataListSingle(request);
         if (res == null || StringUtils.isEmpty(res.result))
@@ -155,12 +156,12 @@ public class ReflectiveRemote implements InvocationHandler {
     }
 
 
-    public List getDataListEntity(String listname, Object[] args ,Class clazz, Integer start, Integer count) throws Exception {
+    public List getDataListEntity(String listname, Object[] args ,Class clazz, Integer idx, Integer start, Integer count) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = listname;
         request.start = start;
         request.count= count;
-        request.colIdx= 0;
+        request.colIdx= idx;
         request.clazz=clazz.getTypeName();
         request.params=args;
         RpcResponse res = remoteBasicDao.getDataListEntity(request);
@@ -179,10 +180,10 @@ public class ReflectiveRemote implements InvocationHandler {
         return Integer.parseInt(res.result);
     }
 
-    public Object getDataMapSingle(String listname, Object[] args) throws Exception {
+    public Object getDataMapSingle(String listname, Object[] args, Integer idx) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = listname;
-        request.colIdx=0;
+        request.colIdx=idx;
         request.params=args;
         RpcResponse res = remoteBasicDao.getDataMapSingle(request);
         if (res == null || StringUtils.isEmpty(res.result))

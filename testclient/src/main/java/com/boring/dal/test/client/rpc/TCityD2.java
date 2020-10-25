@@ -27,28 +27,28 @@ public interface TCityD2 {
     @RemoteAccess(targetList = "TCountryCity_List1",remote = "getDataListMulti")
     List<Object[]> getTCountryCity_List1(String countryName, String cityName, Integer start, Integer count) throws Exception;
 
-    @RemoteAccess(targetList = "TCountryCity_List1",remote = "getDataListSingle")
+    @RemoteAccess(targetList = "TCountryCity_List1",remote = "getDataListSingle",idx = 0)
     List<String> getTCountryCity_List1Forcity_id(String countryName, String cityName, Integer start, Integer count) throws Exception;
 
     @RemoteAccess(targetList = "TCountryCity_List2",remote = "getDataListMulti")
     List<Object[]> getTCountryCity_List2(Integer countryId, Integer start, Integer count) throws Exception;
 
-    @RemoteAccess(targetList = "TCountryCity_List2",remote = "getDataListSingle")
+    @RemoteAccess(targetList = "TCountryCity_List2",remote = "getDataListSingle",idx = 0)
     List<String> getTCountryCity_List2Forcity(Integer countryId, Integer start, Integer count) throws Exception;
 
-    @RemoteAccess(targetList = "TCountryCity_List1",remote = "getDataListEntity")
+    @RemoteAccess(targetList = "TCountryCity_List1",remote = "getDataListEntity",idx = 0)
     <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName, String cityName, Class<T> clazz, Integer start, Integer count) throws Exception;
 
     @RemoteAccess(targetList = "TCountryCity_List1",remote = "countDataList")
     Integer countTCountryCity_List1(String countryName, String cityName) throws Exception;
 
-    @RemoteAccess(targetList = "TCountryCity_map1",remote = "getDataMapSingle")
+    @RemoteAccess(targetList = "TCountryCity_map1",remote = "getDataMapSingle",idx = 0)
     Integer getTCountryCity_Map1Forcity_id(Integer cityId) throws Exception;
 
     @RemoteAccess(targetList = "TCountryCity_map1",remote = "getDataMapMulti")
     Object[] getTCountryCity_Map1(Integer cityId) throws Exception;
 
-    @RemoteAccess(targetList = "TCountryCity_map2",remote = "getDataMapSingle")
+    @RemoteAccess(targetList = "TCountryCity_map2",remote = "getDataMapSingle",idx = 0)
     String getTCountryCity_Map2Forcity(Integer cityId) throws Exception;
 
     @RemoteAccess(targetList = "TCountryCity_map2",remote = "getDataMapMulti")
