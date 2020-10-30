@@ -1,4 +1,4 @@
-package com.boring.dal.cache;
+package com.boring.dal.config;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

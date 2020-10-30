@@ -13,7 +13,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {DataAccessConfig.class})
+@ContextConfiguration(classes = {ConfigConf.class})
 public class DalConfigTests {
 
 

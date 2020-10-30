@@ -23,6 +23,9 @@ public class Constants {
     public static final String CACHE_MODE_NONE = "none";
     public static final String CACHE_MODE_AUTO = "auto";
 
+    public static final String ITEM_MODE_LIST="list";
+    public static final String ITEM_MODE_MAP="map";
+
     public static final String CACHE_UPDATING_PREFIX = "DirtyCheck_";
     public static final String MAXID_KEY = "MaxId";
 

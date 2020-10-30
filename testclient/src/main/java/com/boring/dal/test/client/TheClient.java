@@ -20,8 +20,8 @@ import java.util.List;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients(basePackages = "com.boring.dal")
-@ComponentScan(basePackages = {"com.boring.dal"})
+@EnableFeignClients(basePackages = "com.boring")
+@ComponentScan(basePackages = {"com.boring"})
 @RestController
 public class TheClient {
 

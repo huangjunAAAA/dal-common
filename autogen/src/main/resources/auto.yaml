@@ -1,0 +1,12 @@
+auto:
+  source:
+    -
+      dao: testsvr
+      lookup:
+        - testsvr
+        - testclient
+  output:
+    module: testclient
+    pkg: com.boring.test.rpc
+  skip:
+    - com.boring.dal.test.model.TCountry

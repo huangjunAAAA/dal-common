@@ -1,6 +1,7 @@
 package com.dal.test;
 
 
+import com.boring.dal.ConfigConf;
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.dao.CollectionDao;
 import com.boring.dal.dao.EntityDao;
@@ -24,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {DataAccessConfig.class, HibernateConf.class, HibernateEntityImpl.class, HibernateCollectionImpl.class, HibernateJpaAutoConfiguration.class})
+@ContextConfiguration(classes = {ConfigConf.class, HibernateConf.class, HibernateEntityImpl.class, HibernateCollectionImpl.class, HibernateJpaAutoConfiguration.class})
 public class DaoTests {
 
 

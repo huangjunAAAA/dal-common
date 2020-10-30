@@ -20,20 +20,27 @@ public class YamlFileLoader {
             for (int i = 0; i < clds.length; i++) {
                 ClassLoader clsld = clds[i];
                 InputStream in = clsld.getResourceAsStream(configFile);
-                Constructor c = new Constructor(tClass);
-                c.setPropertyUtils(new PropertyUtils() {
-                    @Override
-                    public Property getProperty(Class<? extends Object> type, String name) {
-                        if (name.indexOf('-') > -1) {
-                            name = CaseUtils.toCamelCase(name, false, '-');
-                        }
-                        return super.getProperty(type, name);
-                    }
-                });
-                Yaml yaml = new Yaml(c);
-                return (T) yaml.load(in);
+                if(in!=null)
+                    return loadConfigFromStream(in,tClass);
             }
         }
         return null;
     }
+
+    public static <T> T loadConfigFromStream(InputStream configIn, Class<T> tClass) {
+        Constructor c = new Constructor(tClass);
+        c.setPropertyUtils(new PropertyUtils() {
+            @Override
+            public Property getProperty(Class<? extends Object> type, String name) {
+                if (name.indexOf('-') > -1) {
+                    name = CaseUtils.toCamelCase(name, false, '-');
+                }
+                return super.getProperty(type, name);
+            }
+        });
+        Yaml yaml = new Yaml(c);
+        return (T) yaml.load(configIn);
+    }
+
+
 }

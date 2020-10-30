@@ -1,9 +1,10 @@
 package com.cache.test;
 
 
+import com.boring.dal.ConfigConf;
+import com.boring.dal.cache.CacheConf;
 import com.boring.dal.cache.CacheHelper;
 import com.boring.dal.cache.ComprehensiveDao;
-import com.boring.dal.cache.CacheConf;
 import com.boring.dal.cache.impl.DaoFacade;
 import com.boring.dal.cache.impl.ProcessCache;
 import com.boring.dal.cache.impl.XMemCache;
@@ -25,7 +26,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {DataAccessConfig.class, HibernateConf.class,
+@ContextConfiguration(classes = {ConfigConf.class, HibernateConf.class,
         HibernateEntityImpl.class, HibernateCollectionImpl.class, DaoFacade.class,
         CacheConf.class, XMemCache.class, CacheHelper.class, UrlEncodeSanitizer.class, ProcessCache.class})
 public class CacheTests {

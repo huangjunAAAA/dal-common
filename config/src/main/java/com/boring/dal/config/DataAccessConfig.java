@@ -1,7 +1,6 @@
 package com.boring.dal.config;
 
 import com.boring.dal.YamlFileLoader;
-import com.boring.dal.YamlPropertySourceFactory;
 import com.boring.dal.config.sqllinker.DruidSQLLinker;
 import com.boring.dal.config.sqllinker.FieldSQLConnector;
 import org.apache.logging.log4j.LogManager;
@@ -9,11 +8,6 @@ import org.apache.logging.log4j.Logger;
 import org.reflections8.Reflections;
 import org.reflections8.scanners.SubTypesScanner;
 import org.reflections8.scanners.TypeAnnotationsScanner;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -21,14 +15,29 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@Configuration
-@PropertySource(value = {"application.yml", "bootstrap.yml"}, factory = YamlPropertySourceFactory.class)
-@Component("dummy-dac")
+
 public class DataAccessConfig {
+
+    public DataAccessConfig() {
+    }
+
+    public DataAccessConfig(DataAccessConfigFile raw){
+        this.raw=raw;
+        init();
+    }
+
+    public DataAccessConfig(String configFile){
+        this.configFile=configFile;
+        DataAccessConfigFile dFile = YamlFileLoader.loadConfigFromPath(configFile, DataAccessConfigFile.class);
+        if (dFile != null) {
+            this.raw=dFile;
+            init();
+        }
+    }
 
     private static final Logger logger = LogManager.getLogger("DAO");
 
-    private volatile DataAccessConfigFile raw;
+    protected volatile DataAccessConfigFile raw;
 
     private volatile Map<Class, List<DataEntry>> associatedDataEntries;
 
@@ -37,7 +46,7 @@ public class DataAccessConfig {
     private FieldSQLConnector linker = new DruidSQLLinker();
 
     private volatile LinkedHashMap<Class, AccessibleFieldInfo> ldClass;
-    @Value("${dao.config}")
+
     private String configFile;
 
     private static Field getIdField(Class<?> cls) {
@@ -56,18 +65,6 @@ public class DataAccessConfig {
 
     public int getSlaveDirtyLast() {
         return raw.cache.getPanic();
-    }
-
-    @Bean(name = "dataAccessConfig")
-    public DataAccessConfig loadConfig() {
-        DataAccessConfigFile dFile = YamlFileLoader.loadConfigFromPath(configFile, DataAccessConfigFile.class);
-        if (dFile != null) {
-            DataAccessConfig dataAccessConfig = new DataAccessConfig();
-            dataAccessConfig.raw = dFile;
-            dataAccessConfig.init();
-            return dataAccessConfig;
-        }
-        return null;
     }
 
     public void init() {
@@ -123,29 +120,7 @@ public class DataAccessConfig {
         if (ldClass == null)
             synchronized (this) {
                 if (ldClass == null) {
-                    ArrayList<Class> toLoadClazz = new ArrayList<>();
-                    ScannedModel dm = raw.getObjects();
-                    Reflections reflections = new Reflections(dm.getScanPkg(), new TypeAnnotationsScanner(), new SubTypesScanner());
-
-                    Set<Class<?>> tmp = reflections.getTypesAnnotatedWith(Entity.class);
-                    toLoadClazz.addAll(tmp);
-
-                    if (dm.getDefined() != null) {
-                        for (Iterator<String> iterator = dm.getDefined().iterator(); iterator.hasNext(); ) {
-                            String clsname = iterator.next();
-                            try {
-                                Class<?> cls = Class.forName(clsname);
-                                if (cls.getAnnotation(Entity.class) != null) {
-                                    if (toLoadClazz.indexOf(cls) == -1) {
-                                        toLoadClazz.add(cls);
-                                    }
-                                }
-                            } catch (ClassNotFoundException e) {
-                                logger.error(e, e);
-                            }
-                        }
-                    }
-
+                    List<Class> toLoadClazz = loadConfiguredClass();
                     ldClass = new LinkedHashMap<>();
                     for (Iterator<Class> iterator = toLoadClazz.iterator(); iterator.hasNext(); ) {
                         Class cls = iterator.next();
@@ -163,6 +138,32 @@ public class DataAccessConfig {
                 }
             }
         return new ArrayList<>(ldClass.keySet());
+    }
+
+    protected List<Class> loadConfiguredClass(){
+        ArrayList<Class> toLoadClazz = new ArrayList<>();
+        ScannedModel dm = raw.getObjects();
+        Reflections reflections = new Reflections(dm.getScanPkg(), new TypeAnnotationsScanner(), new SubTypesScanner());
+
+        Set<Class<?>> tmp = reflections.getTypesAnnotatedWith(Entity.class);
+        toLoadClazz.addAll(tmp);
+
+        if (dm.getDefined() != null) {
+            for (Iterator<String> iterator = dm.getDefined().iterator(); iterator.hasNext(); ) {
+                String clsname = iterator.next();
+                try {
+                    Class<?> cls = Class.forName(clsname);
+                    if (cls.getAnnotation(Entity.class) != null) {
+                        if (toLoadClazz.indexOf(cls) == -1) {
+                            toLoadClazz.add(cls);
+                        }
+                    }
+                } catch (ClassNotFoundException e) {
+                    logger.error(e, e);
+                }
+            }
+        }
+        return toLoadClazz;
     }
 
     public Field getEntityIdField(Class<?> cls) {

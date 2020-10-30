@@ -1,6 +1,6 @@
 package com.boring.dal.test.model;
 
-import com.boring.dal.cache.DalCached;
+import com.boring.dal.config.DalCached;
 
 import javax.persistence.*;
 import java.io.Serializable;

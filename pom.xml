@@ -12,6 +12,7 @@
         <module>rpc-common</module>
         <module>testsvr</module>
         <module>testclient</module>
+        <module>autogen</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
