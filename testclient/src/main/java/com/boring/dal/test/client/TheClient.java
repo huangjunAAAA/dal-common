@@ -108,7 +108,7 @@ public class TheClient {
         ret.append("get list2 single:"+new Gson().toJson(cityidl2)).append("<br>");
 
 
-        List<TCity2> centity = td2.getTCountryCity_List1Forcity_idEntity("India", "Adoni", TCity2.class, 0, 4);
+        List<TCity2> centity = td2.getTCountryCity_List1Forcity_idEntity("India", "Adoni", 0, 4, TCity2.class);
         ret.append("get list entity:"+new Gson().toJson(centity)).append("<br>");
 
         Object[] map1 = td2.getTCountryCity_Map1(16);

@@ -64,7 +64,7 @@ public class ReflectiveRemote implements InvocationHandler {
             }
             case "getDataListEntity": {
                 Object[] actualargs = Arrays.copyOfRange(args, 0, args.length - 3);
-                return getDataListEntity(listname, actualargs, (Class) args[args.length - 3],idx,(Integer) args[args.length - 2], (Integer) args[args.length - 1]);
+                return getDataListEntity(listname, actualargs,idx,(Integer) args[args.length - 3], (Integer) args[args.length - 2], (Class) args[args.length - 1]);
             }
             case "countDataList": {
                 return countDataList(listname, args);
@@ -156,7 +156,7 @@ public class ReflectiveRemote implements InvocationHandler {
     }
 
 
-    public List getDataListEntity(String listname, Object[] args ,Class clazz, Integer idx, Integer start, Integer count) throws Exception {
+    public List getDataListEntity(String listname, Object[] args , Integer idx, Integer start, Integer count,Class clazz) throws Exception {
         RpcRequest request = new RpcRequest();
         request.listName = listname;
         request.start = start;

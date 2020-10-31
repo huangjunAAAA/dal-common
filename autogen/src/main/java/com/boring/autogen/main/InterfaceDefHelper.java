@@ -83,6 +83,66 @@ public class InterfaceDefHelper {
 
     private List<AutoMethodDef> handleListItem(DataEntry de, DataAccessConfig config){
         List<AutoMethodDef> ret=new ArrayList<>();
+        // countList
+        AutoMethodDef countList=new AutoMethodDef();
+        LinkedList<SQLVarInfo> kplist = de.getKeyProperties();
+        int i=0;
+        for (i = 0; i < kplist.size(); i++) {
+            SQLVarInfo var = kplist.get(i);
+            String vName=var.getter.getName().replace("get","").toLowerCase()+i;
+            countList.params.put(vName,var.getter.getReturnType());
+        }
+        countList.exceptions.add(Exception.class.getName());
+        countList.methodName="count"+de.getName();
+        countList.returnClass="Integer";
+        countList.remote="countDataList";
+        countList.targetList=de.getName();
+        ret.add(countList);
+
+        // getDataListMulti
+        AutoMethodDef getDataMapMulti=new AutoMethodDef();
+        getDataMapMulti.params=new LinkedHashMap<>(countList.params);
+        getDataMapMulti.params.put("start",Integer.class);
+        getDataMapMulti.params.put("count",Integer.class);
+
+
+        getDataMapMulti.returnClass="List<Object[]>";
+        getDataMapMulti.methodName="listAll"+de.getName();
+        getDataMapMulti.exceptions.add(Exception.class.getName());
+        getDataMapMulti.remote="getDataListMulti";
+        getDataMapMulti.targetList=de.getName();
+        if(de.getValueProperties().size()>1)
+            ret.add(getDataMapMulti);
+
+        // getDataListSingle
+        LinkedHashMap<String, Class> vplist = de.getValueProperties();
+        i=0;
+        for (Iterator<Map.Entry<String, Class>> iterator = vplist.entrySet().iterator(); iterator.hasNext(); i++) {
+            Map.Entry<String, Class> val =  iterator.next();
+            AutoMethodDef getDataMapSingle=new AutoMethodDef();
+            getDataMapSingle.targetList=de.getName();
+            getDataMapSingle.remote="getDataListSingle";
+            getDataMapSingle.idx=i;
+            getDataMapSingle.exceptions.add(Exception.class.getName());
+            String[] p1=val.getKey().split("\\.");
+            getDataMapSingle.methodName="list"+de.getName()+"For"+p1[p1.length-1]+i;
+            getDataMapSingle.returnClass="List<"+val.getValue().getTypeName()+">";
+            getDataMapSingle.params=getDataMapMulti.params;
+            ret.add(getDataMapSingle);
+        }
+
+
+        // getDataListEntity
+        AutoMethodDef getDataListEntity=new AutoMethodDef();
+        getDataListEntity.params=new LinkedHashMap<>(getDataMapMulti.params);
+        getDataListEntity.params.put("clazz",Class.class);
+        getDataListEntity.returnClass="List";
+        getDataListEntity.methodName="listEntity"+de.getName();
+        getDataListEntity.exceptions.add(Exception.class.getName());
+        getDataListEntity.remote="getDataListEntity";
+        getDataListEntity.targetList=de.getName();
+
+        ret.add(getDataListEntity);
         return ret;
     }
 
@@ -102,7 +162,8 @@ public class InterfaceDefHelper {
         getDataMapMulti.exceptions.add(Exception.class.getName());
         getDataMapMulti.remote="getDataMapMulti";
         getDataMapMulti.targetList=de.getName();
-        ret.add(getDataMapMulti);
+        if(de.getValueProperties().size()>1)
+            ret.add(getDataMapMulti);
 
         // getDataMapSingle
         LinkedHashMap<String, Class> vplist = de.getValueProperties();

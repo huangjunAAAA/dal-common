@@ -37,7 +37,7 @@ public interface TCityD2 {
     List<String> getTCountryCity_List2Forcity(Integer countryId, Integer start, Integer count) throws Exception;
 
     @RemoteAccess(targetList = "TCountryCity_List1",remote = "getDataListEntity",idx = 0)
-    <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName, String cityName, Class<T> clazz, Integer start, Integer count) throws Exception;
+    <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName, String cityName, Integer start, Integer count, Class<T> clazz) throws Exception;
 
     @RemoteAccess(targetList = "TCountryCity_List1",remote = "countDataList")
     Integer countTCountryCity_List1(String countryName, String cityName) throws Exception;
