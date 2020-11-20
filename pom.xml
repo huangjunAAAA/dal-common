@@ -74,9 +74,9 @@
     <build>
         <extensions>
             <extension>
-                <groupId>@project.groupId@</groupId>
+                <groupId>com.spotify</groupId>
                 <artifactId>dockerfile-maven-extension</artifactId>
-                <version>@project.version@</version>
+                <version>1.4.13</version>
             </extension>
         </extensions>
     </build>

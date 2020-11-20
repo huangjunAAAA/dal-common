@@ -28,9 +28,9 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>@project.groupId@</groupId>
-                <artifactId>@project.artifactId@</artifactId>
-                <version>@project.version@</version>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.4.13</version>
                 <executions>
                     <execution>
                         <id>build</id>
