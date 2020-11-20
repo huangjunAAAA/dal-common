@@ -1,7 +1,11 @@
 package com.boring.dal.cache.impl;
 
-import com.boring.dal.cache.*;
+import com.boring.dal.cache.CacheHelper;
+import com.boring.dal.cache.ComprehensiveDao;
+import com.boring.dal.cache.RealmCache;
+import com.boring.dal.cache.SimpleCache;
 import com.boring.dal.config.Constants;
+import com.boring.dal.config.DalCached;
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.config.DataEntry;
 import com.boring.dal.dao.CollectionDao;
