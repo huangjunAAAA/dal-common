@@ -124,8 +124,9 @@ public class TCityDaoWrapper implements TCityD2 {
         return JSON.parseObject(res.result, new TypeReference<List<String>>(){});
     }
 
-    
-    public <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName, String cityName, Class<T> clazz, Integer start, Integer count) throws Exception {
+    @Override
+    public <T> List<T> getTCountryCity_List1Forcity_idEntity(String countryName, String cityName, Integer start, Integer count, Class<T> clazz) throws Exception {
+
         RpcRequest request = new RpcRequest();
         request.listName = "TCountryCity_List1";
         request.start = start;
