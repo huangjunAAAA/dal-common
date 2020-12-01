@@ -16,8 +16,6 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.persistence.Column;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -33,9 +31,6 @@ public class HibernateEntityImpl implements EntityDao {
 
     @Autowired
     private SessionFactory sessionFactory;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Resource
     private DataAccessConfig dataAccessConfig;
