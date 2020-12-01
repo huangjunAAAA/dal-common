@@ -1,0 +1,7 @@
+spring:
+    redis:
+        database: 0
+        host: 127.0.0.1
+        port: 6333
+        password:
+        timeout: 6000
