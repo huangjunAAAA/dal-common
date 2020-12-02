@@ -9,6 +9,7 @@ public class AutoInterfaceDef {
     public String className;
     public String pkgName;
     public Class entityClass;
+    public String idClass;
 
     public String getFileName() {
         return fileName;
@@ -28,5 +29,9 @@ public class AutoInterfaceDef {
 
     public Class getEntityClass() {
         return entityClass;
+    }
+
+    public String getIdClass() {
+        return idClass;
     }
 }

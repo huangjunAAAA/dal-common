@@ -29,9 +29,92 @@ public class SignatureUtil {
         }
         sb.append(";");
         return sb.toString();
-
     }
 
+    public String implDef(AutoMethodDef methodDef){
+        if(StringUtils.isEmpty(methodDef.targetList))
+            return "";
+        StringBuilder impl=new StringBuilder(signatureDef(methodDef).replace(";","{"));
+        impl.append("\n");
+        impl.append("        return comprehensiveDao.").append(methodDef.remote).append("(");
+
+
+        StringBuilder argstr=new StringBuilder("new Object[]{");
+        int bEmbrace=-1;
+        int i=0;
+        switch (methodDef.remote) {
+            case "getDataListMulti": {
+                bEmbrace=methodDef.params.size()-3;
+                for (Iterator<String> iterator = methodDef.params.keySet().iterator(); iterator.hasNext();i++ ) {
+                    String p =  iterator.next();
+                    String[] p1=p.split("\\.");
+                    argstr.append(p1[p1.length-1]).append("_").append(i);
+                    if(i!=bEmbrace) {
+                        if (iterator.hasNext())
+                            argstr.append(",");
+                    }else
+                        argstr.append("},");
+                }
+                break;
+            }
+            case "getDataListSingle": {
+                bEmbrace=methodDef.params.size()-3;
+                for (Iterator<String> iterator = methodDef.params.keySet().iterator(); iterator.hasNext();i++ ) {
+                    String p =  iterator.next();
+                    String[] p1=p.split("\\.");
+                    argstr.append(p1[p1.length-1]).append("_").append(i);
+                    if(i!=bEmbrace)
+                        argstr.append(",");
+                    else
+                        argstr.append("},");
+                }
+                argstr.append(methodDef.idx==null?0:methodDef.idx);
+                break;
+            }
+            case "getDataListEntity": {
+                bEmbrace=methodDef.params.size()-4;
+                for (Iterator<String> iterator = methodDef.params.keySet().iterator(); iterator.hasNext();i++ ) {
+                    String p =  iterator.next();
+                    String[] p1=p.split("\\.");
+                    argstr.append(p1[p1.length-1]).append("_").append(i);
+                    if(i!=bEmbrace) {
+                        argstr.append(",");
+                    }else
+                        argstr.append("}").append(",");
+                }
+                argstr.append(methodDef.idx==null?0:methodDef.idx);
+                break;
+            }
+            case "getDataMapSingle": {
+                for (Iterator<String> iterator = methodDef.params.keySet().iterator(); iterator.hasNext();i++ ) {
+                    String p =  iterator.next();
+                    String[] p1=p.split("\\.");
+                    argstr.append(p1[p1.length-1]).append("_").append(i);
+                    if(iterator.hasNext())
+                        argstr.append(",");
+                }
+                argstr.append("}").append(",").append(methodDef.idx);
+                break;
+            }
+            default:
+                for (Iterator<String> iterator = methodDef.params.keySet().iterator(); iterator.hasNext();i++ ) {
+                    String p =  iterator.next();
+                    String[] p1=p.split("\\.");
+                    argstr.append(p1[p1.length-1]).append("_").append(i);
+                    if(iterator.hasNext())
+                        argstr.append(",");
+                }
+                argstr.append("}");
+        }
+
+
+
+
+
+
+        impl.append("\"").append(methodDef.targetList).append("\",").append(argstr).append(");\n    }");
+        return impl.toString();
+    }
     public String annotationDef(AutoMethodDef methodDef){
         if(StringUtils.isEmpty(methodDef.targetList))
             return "@RemoteAccess";

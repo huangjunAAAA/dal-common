@@ -5,12 +5,14 @@ import java.util.List;
 
 public class AutoGenConfig {
 
-    public AGCfg auto;
+    public List<AGCfg> auto;
 
     public static class AGCfg{
         public List<SourceDef> source;
         public Output output;
         public List<String> skip=new ArrayList<>();
+        public String template;
+        public String ending;
     }
 
     public static class Output{

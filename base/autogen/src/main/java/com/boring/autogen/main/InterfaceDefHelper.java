@@ -14,15 +14,17 @@ import java.util.*;
 @Component
 public class InterfaceDefHelper {
 
-    public AutoInterfaceDef buildInterfaceDefinitionfromClass(DataAccessConfig config, Class<?> tclass, AutoGenConfig autoGenConfig){
+    public AutoInterfaceDef buildInterfaceDefinitionfromClass(DataAccessConfig config, Class<?> tclass, AutoGenConfig.AGCfg autoGenConfig){
         AutoInterfaceDef target=new AutoInterfaceDef();
-        target.pkgName=autoGenConfig.auto.output.pkg;
-        target.fileName=tclass.getSimpleName()+"RI";
+        target.pkgName=autoGenConfig.output.pkg;
+        target.fileName=tclass.getSimpleName()+autoGenConfig.ending;
         target.className=target.pkgName+"."+target.fileName;
         target.entityClass=tclass;
 
         Class idClass=config.getEntityIdField(tclass).getType();
         String idType=idClass.getName();
+        target.idClass=idType;
+
         // get
         AutoMethodDef get=new AutoMethodDef();
         get.exceptions.add(Exception.class.getName());
@@ -93,7 +95,7 @@ public class InterfaceDefHelper {
             countList.params.put(vName,var.getter.getReturnType());
         }
         countList.exceptions.add(Exception.class.getName());
-        countList.methodName="count"+de.getName();
+        countList.methodName="count"+handleMethodName(de.getName());
         countList.returnClass="Integer";
         countList.remote="countDataList";
         countList.targetList=de.getName();
@@ -107,7 +109,7 @@ public class InterfaceDefHelper {
 
 
         getDataMapMulti.returnClass="List<Object[]>";
-        getDataMapMulti.methodName="listAll"+de.getName();
+        getDataMapMulti.methodName="listAll"+handleMethodName(de.getName());
         getDataMapMulti.exceptions.add(Exception.class.getName());
         getDataMapMulti.remote="getDataListMulti";
         getDataMapMulti.targetList=de.getName();
@@ -125,7 +127,7 @@ public class InterfaceDefHelper {
             getDataMapSingle.idx=i;
             getDataMapSingle.exceptions.add(Exception.class.getName());
             String[] p1=val.getKey().split("\\.");
-            getDataMapSingle.methodName="list"+de.getName()+"For"+p1[p1.length-1]+i;
+            getDataMapSingle.methodName="list"+handleMethodName(de.getName())+"For"+p1[p1.length-1]+i;
             getDataMapSingle.returnClass="List<"+val.getValue().getTypeName()+">";
             getDataMapSingle.params=getDataMapMulti.params;
             ret.add(getDataMapSingle);
@@ -137,7 +139,7 @@ public class InterfaceDefHelper {
         getDataListEntity.params=new LinkedHashMap<>(getDataMapMulti.params);
         getDataListEntity.params.put("clazz",Class.class);
         getDataListEntity.returnClass="List";
-        getDataListEntity.methodName="listEntity"+de.getName();
+        getDataListEntity.methodName="listEntity"+handleMethodName(de.getName());
         getDataListEntity.exceptions.add(Exception.class.getName());
         getDataListEntity.remote="getDataListEntity";
         getDataListEntity.targetList=de.getName();
@@ -158,7 +160,7 @@ public class InterfaceDefHelper {
             getDataMapMulti.params.put(vName,var.getter.getReturnType());
         }
         getDataMapMulti.returnClass="Object[]";
-        getDataMapMulti.methodName="mapAll"+de.getName();
+        getDataMapMulti.methodName="mapAll"+handleMethodName(de.getName());
         getDataMapMulti.exceptions.add(Exception.class.getName());
         getDataMapMulti.remote="getDataMapMulti";
         getDataMapMulti.targetList=de.getName();
@@ -176,12 +178,17 @@ public class InterfaceDefHelper {
             getDataMapSingle.idx=i;
             getDataMapSingle.exceptions.add(Exception.class.getName());
             String[] p1=val.getKey().split("\\.");
-            getDataMapSingle.methodName="map"+de.getName()+"For"+p1[p1.length-1]+i;
+            getDataMapSingle.methodName="map"+handleMethodName(de.getName())+"For"+p1[p1.length-1]+i;
             getDataMapSingle.returnClass=val.getValue().getTypeName();
             getDataMapSingle.params=getDataMapMulti.params;
             ret.add(getDataMapSingle);
         }
 
         return ret;
+    }
+
+    private String handleMethodName(String m){
+        return m;
+//        return m.replaceAll("_","");
     }
 }

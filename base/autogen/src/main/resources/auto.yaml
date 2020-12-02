@@ -1,12 +1,28 @@
 auto:
-  source:
-    -
-      dao: testsvr
-      lookup:
-        - testsvr
-        - testclient
-  output:
-    module: testclient
-    pkg: com.boring.test.rpc
-  skip:
-    - com.boring.dal.test.model.TCountry
+#  -
+#    source:
+#      -
+#        dao: example/testsvr
+#        lookup:
+#          - example/testsvr
+#          - example/testclient
+#    output:
+#      module: example/testclient
+#      pkg: com.boring.test.rpc
+#    template: remoteint.ftl
+#    ending: RI
+#    skip:
+#      - com.boring.dal.test.model.TCountry
+  -
+    source:
+      - dao: example/testsvr
+        lookup:
+          - example/testsvr
+          - example/testclient
+    output:
+      module: example/testsvr
+      pkg: com.boring.test.local
+    template: localimpl.ftl
+    ending: LocalImpl
+    skip:
+      - com.boring.dal.test.model.TCountry
