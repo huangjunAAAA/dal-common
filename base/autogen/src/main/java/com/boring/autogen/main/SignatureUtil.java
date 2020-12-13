@@ -34,9 +34,7 @@ public class SignatureUtil {
     public String implDef(AutoMethodDef methodDef){
         if(StringUtils.isEmpty(methodDef.targetList))
             return "";
-        StringBuilder impl=new StringBuilder(signatureDef(methodDef).replace(";","{"));
-        impl.append("\n");
-        impl.append("        return comprehensiveDao.").append(methodDef.remote).append("(");
+
 
 
         StringBuilder argstr=new StringBuilder("new Object[]{");
@@ -110,9 +108,29 @@ public class SignatureUtil {
 
 
 
+        StringBuilder impl=new StringBuilder(signatureDef(methodDef).replace(";","{"));
+        impl.append("\n");
+        impl.append("        return");
+        switch (methodDef.remote){
+            case "getDataMapMulti":{
+                impl.append(" ");
+                impl.append(methodDef.returnClass).append(".fromObjectArray(");
+                impl.append(" comprehensiveDao.").append(methodDef.remote).append("(");
+                impl.append("\"").append(methodDef.targetList).append("\",").append(argstr).append("));\n    }");
+                break;
+            }
+            case "getDataListMulti": {
+                impl.append(" ");
+                impl.append(methodDef.pType).append(".fromObjectArrayList(");
+                impl.append(" comprehensiveDao.").append(methodDef.remote).append("(");
+                impl.append("\"").append(methodDef.targetList).append("\",").append(argstr).append("));\n    }");
+                break;
+            }
+            default:
+                impl.append(" comprehensiveDao.").append(methodDef.remote).append("(");
+                impl.append("\"").append(methodDef.targetList).append("\",").append(argstr).append(");\n    }");
+        }
 
-
-        impl.append("\"").append(methodDef.targetList).append("\",").append(argstr).append(");\n    }");
         return impl.toString();
     }
     public String annotationDef(AutoMethodDef methodDef){

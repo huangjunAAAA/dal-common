@@ -1,9 +1,13 @@
 package com.boring.dal.cache.impl;
 
 import com.boring.dal.cache.SimpleCache;
+import com.boring.dal.cache.construct.VersionedValue;
 import com.boring.dal.cache.sanitizer.KeySanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -49,6 +53,62 @@ public class RedisCache implements SimpleCache {
     @Override
     public void setEntity(String key, Object obj, int expire) {
         setRaw(obj.getClass().getTypeName(),key,obj,expire);
+    }
+
+    @Override
+    public <T> VersionedValue<T> getVersionedObject(String region, String key, Supplier<T> supplier) {
+        final String rkey=getRegionKey(region,key);
+        return redisTemplate.execute(new SessionCallback<VersionedValue<T>>() {
+            @Override
+            public VersionedValue<T> execute(RedisOperations operations) throws DataAccessException {
+                VersionedValue<T> r1=new VersionedValue<>();
+                operations.multi();
+                operations.opsForValue().get("version"+delimiter+rkey);
+                r1.val= (T) operations.opsForValue().get(rkey);
+                List rlst = operations.exec();
+                r1.version= rlst.get(0)==null?-1:(Long)rlst.get(0);
+                r1.val= (T) rlst.get(1);
+                return r1;
+            }
+        });
+    }
+
+    @Override
+    public <T> VersionedValue<T> getVersionedObject(String region, String key, Class<T> tClass) {
+        final String rkey=getRegionKey(region,key);
+        return redisTemplate.execute(new SessionCallback<VersionedValue<T>>() {
+            @Override
+            public VersionedValue<T> execute(RedisOperations operations) throws DataAccessException {
+                VersionedValue<T> r1=new VersionedValue<>();
+                operations.multi();
+                operations.opsForValue().get("version"+delimiter+rkey);
+                r1.val= (T) operations.opsForValue().get(rkey);
+                List rlst = operations.exec();
+                r1.version= rlst.get(0)==null?-1:(Long)rlst.get(0);
+                r1.val= (T) rlst.get(1);
+                return r1;
+            }
+        });
+    }
+
+    @Override
+    public <T> VersionedValue<T> getVersionedEntity(String key, Class<T> tClass) {
+        return getVersionedObject(tClass.getTypeName(),key,tClass);
+    }
+
+    @Override
+    public boolean setVersionedEntity(String key, VersionedValue obj) {
+        return setVersionedEntity(key,obj,0);
+    }
+
+    @Override
+    public boolean setVersionedEntity(String key, VersionedValue obj, int expire) {
+        return setVersionedRaw(obj.getClass().getTypeName(),key,obj,expire);
+    }
+
+    @Override
+    public boolean setVersionedRaw(String region, String key, VersionedValue content, int expire) {
+        return false;
     }
 
     @Override

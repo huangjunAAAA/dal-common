@@ -2,6 +2,7 @@ package com.boring.autogen.main;
 
 import com.boring.autogen.model.AutoGenConfig;
 import com.boring.autogen.model.AutoInterfaceDef;
+import com.boring.autogen.model.AutoReturnDef;
 import com.boring.dal.YamlFileLoader;
 import com.boring.dal.config.DataAccessConfigFile;
 import freemarker.cache.ClassTemplateLoader;
@@ -31,16 +32,20 @@ public class AutoGen {
 
     public void execAgCfg(AutoGenConfig.AGCfg config) throws Exception{
         InterfaceDefHelper helper=new InterfaceDefHelper();
+        ReturnTypeDefHelper rh=new ReturnTypeDefHelper();
         List<AutoInterfaceDef> allInts=new ArrayList<>();
+        HashMap<String, AutoReturnDef> rtmap=new HashMap<>();
         for (Iterator<AutoGenConfig.SourceDef> iterator = config.source.iterator(); iterator.hasNext(); ) {
             AutoGenConfig.SourceDef sd =  iterator.next();
             String dacFile = sd.dao + "/src/main/resources/dao.yml";
             DataAccessConfigFile daf=YamlFileLoader.loadConfigFromStream(new FileInputStream(dacFile), DataAccessConfigFile.class);
             JITDAConfig jitdaConfig=new JITDAConfig(daf,sd.lookup);
             List<Class> c1 = jitdaConfig.loadAllClazz();
+            rtmap = rh.buildReturnTypeDefs(jitdaConfig, c1, config);
+
             for (Iterator<Class> classIterator = c1.iterator(); classIterator.hasNext(); ) {
                 Class c =  classIterator.next();
-                AutoInterfaceDef mds = helper.buildInterfaceDefinitionfromClass(jitdaConfig, c,config);
+                AutoInterfaceDef mds = helper.buildInterfaceDefinitionfromClass(jitdaConfig, c,config,rtmap);
                 allInts.add(mds);
             }
         }
@@ -51,6 +56,44 @@ public class AutoGen {
             if(!skipList.containsKey(intDef.entityClass.getTypeName()))
                 printInterface(intDef,config);
         }
+
+        for (Iterator<AutoReturnDef> iterator = rtmap.values().iterator(); iterator.hasNext(); ) {
+            AutoReturnDef ard =  iterator.next();
+            printReturnType(ard,config);
+        }
+
+    }
+
+    public void printReturnType(AutoReturnDef ard,AutoGenConfig.AGCfg config) throws Exception{
+        StringBuilder targetDir=new StringBuilder();
+        targetDir.append(config.output.module).append("/src/main/java");
+        String[] p=ard.className.split("\\.");
+        for (int i = 0; i < p.length-1; i++) {
+            String d = p[i];
+            targetDir.append("/").append(d);
+        }
+        String d=targetDir.toString();
+
+        new File(d).mkdirs();
+
+        Map root = new HashMap();
+        root.put("ard",ard);
+        root.put("util",new FieldUtil());
+
+        String f=targetDir.append("/").append(ard.fileName).append(".java").toString();
+        Template temp = getConfiguration().getTemplate("return.ftl");
+        ByteArrayOutputStream bao=new ByteArrayOutputStream();
+        Writer out = new PrintWriter(bao);
+        temp.process(root, out);
+        out.flush();
+        out.close();
+
+        String fixed = bao.toString();
+//        fixed=new Formatter().formatSource(fixed);
+        FileWriter fw=new FileWriter(f);
+        fw.write(fixed);
+        fw.flush();
+        fw.close();
     }
 
 

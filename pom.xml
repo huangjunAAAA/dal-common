@@ -14,7 +14,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.boring.dal</groupId>
-    <artifactId>com</artifactId>
+    <artifactId>dal</artifactId>
     <version>1.0.0</version>
     <name>dal common</name>
     <description>common</description>
@@ -66,14 +66,15 @@
         <!--        </extensions>-->
         <plugins>
             <plugin>
-                <groupId>org.boring</groupId>
-                <artifactId>install-all</artifactId>
-                <version>1.0.1</version>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.4.14-ExtendedExport</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
                         <goals>
-                            <goal>hello</goal>
+                            <goal>build</goal>
+                            <goal>export</goal>
                         </goals>
                     </execution>
                 </executions>

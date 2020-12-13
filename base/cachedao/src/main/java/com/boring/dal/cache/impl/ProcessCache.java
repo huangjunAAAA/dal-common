@@ -3,6 +3,8 @@ package com.boring.dal.cache.impl;
 import com.boring.dal.cache.CacheHelper;
 import com.boring.dal.cache.RealmCache;
 import com.boring.dal.cache.SimpleCache;
+import com.boring.dal.cache.construct.ObjectCacheKey;
+import com.boring.dal.cache.construct.VersionedValue;
 import com.boring.dal.config.Constants;
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.config.DataEntry;
@@ -30,17 +32,14 @@ import java.util.function.Supplier;
 public class ProcessCache implements RealmCache {
 
     private static final Logger logger = LogManager.getLogger("DAO");
-    private static final ConcurrentHashMap<SimpleCache.CacheKey, Long> processDirty = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<ObjectCacheKey, Long> processDirty = new ConcurrentHashMap<>();
     @Resource
     protected DataAccessConfig dataAccessConfig;
 
     @Resource
-    private SimpleCache xMemCache;
-
-    @Resource
     private SimpleCache redisCache;
 
-    @Autowired
+    @Autowired(required = false)
     private TxFlusher txFlusher;
 
     @Resource
@@ -50,7 +49,7 @@ public class ProcessCache implements RealmCache {
     public void invalidateListData(DataEntry de, String key) {
         checkKeySanity(key);
         txFlusher.markDirty(de.getName(), key);
-        xMemCache.deleteKey(de.getName(), key);
+        redisCache.deleteKey(de.getName(), key);
     }
 
     @Override
@@ -67,7 +66,7 @@ public class ProcessCache implements RealmCache {
             String key = cacheHelper.getDataEntryCacheKeyWithEntities(de, entity);
 
             invalidateListData(de, key);
-            xMemCache.deleteKey(de.getName(), key);
+            redisCache.deleteKey(de.getName(), key);
         }
     }
 
@@ -75,17 +74,11 @@ public class ProcessCache implements RealmCache {
     @Override
     public int inspectList(DataEntry de, String key) {
         checkKeySanity(key);
-        SimpleCache.CacheKey ckey = new SimpleCache.CacheKey(de.getName(), key);
+        ObjectCacheKey ckey = new ObjectCacheKey(de.getName(), key);
         return inspectCache(ckey);
     }
 
-    @Override
-    public int inspectEntity(Object id, Class clazz) {
-        SimpleCache.CacheKey ckey = new SimpleCache.CacheKey(clazz.getTypeName(), id.toString());
-        return inspectCache(ckey);
-    }
-
-    private int inspectCache(SimpleCache.CacheKey ckey) {
+    private int inspectCache(ObjectCacheKey ckey) {
         checkKeySanity(ckey.key);
         if (logger.isDebugEnabled())
             logger.debug("inspectCache:" + ckey.region + "," + ckey.key);
@@ -102,7 +95,7 @@ public class ProcessCache implements RealmCache {
                 return Constants.SLAVE_DIRTY;
             return Constants.CACHE_DIRTY;
         } else {
-            ts = xMemCache.get(Constants.CACHE_UPDATING_PREFIX + ckey.region, ckey.key, Long.class);
+            ts = redisCache.get(Constants.CACHE_UPDATING_PREFIX + ckey.region, ckey.key, Long.class);
             if (logger.isDebugEnabled())
                 logger.debug("inspectCache:" + ckey.region + "," + ckey.key + ", val in memcached:" + ts + (ts != null ? ", diff:" + (System.currentTimeMillis() - ts) : ""));
             if (ts == null)
@@ -122,13 +115,25 @@ public class ProcessCache implements RealmCache {
     @Override
     public void setListData(String listName, String key, Object data) {
         checkKeySanity(key);
-        xMemCache.setRaw(listName, key, data, 0);
+        redisCache.setRaw(listName, key, data, 0);
     }
 
     @Override
     public <T> T getListData(String listName, String key, Supplier<T> s) {
         checkKeySanity(key);
-        return xMemCache.get(listName, key, s);
+        return redisCache.get(listName, key, s);
+    }
+
+    @Override
+    public boolean setVersionedListData(String listName, String key, VersionedValue data) {
+        checkKeySanity(key);
+        return redisCache.setVersionedRaw(listName,key,data,0);
+    }
+
+    @Override
+    public <T> VersionedValue<T> getVersionedListData(String listName, String key, Supplier<T> s) {
+        checkKeySanity(key);
+        return redisCache.getVersionedObject(listName,key,s);
     }
 
     @Override
@@ -203,7 +208,7 @@ public class ProcessCache implements RealmCache {
         }
 
         // update max id
-        xMemCache.setRaw(entity.getClass().getTypeName(), Constants.MAXID_KEY, id, 0);
+        redisCache.setRaw(entity.getClass().getTypeName(), Constants.MAXID_KEY, id, 0);
     }
 
     @Override
@@ -214,7 +219,7 @@ public class ProcessCache implements RealmCache {
     @Component
     public static class ThreadCache implements TxFlusher {
 
-        private static final ThreadLocal<List<SimpleCache.CacheKey>> threadDirty = new ThreadLocal<>();
+        private static final ThreadLocal<List<ObjectCacheKey>> threadDirty = new ThreadLocal<>();
 
         private static final ScheduledExecutorService es = new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
 
@@ -228,8 +233,8 @@ public class ProcessCache implements RealmCache {
             checkKeySanity(key);
             if (logger.isDebugEnabled())
                 logger.debug("markDirty: " + region + ", key:" + key);
-            SimpleCache.CacheKey ckey = new SimpleCache.CacheKey(region, key);
-            List<SimpleCache.CacheKey> lst = threadDirty.get();
+            ObjectCacheKey ckey = new ObjectCacheKey(region, key);
+            List<ObjectCacheKey> lst = threadDirty.get();
             if (lst == null) {
                 lst = new ArrayList<>();
                 threadDirty.set(lst);
@@ -242,20 +247,20 @@ public class ProcessCache implements RealmCache {
         public void txClean(Object transaction) {
             if (logger.isDebugEnabled())
                 logger.debug("txClean: " + transaction);
-            final List<SimpleCache.CacheKey> lst = threadDirty.get();
+            final List<ObjectCacheKey> lst = threadDirty.get();
             if (lst == null) {
                 return;
             }
             threadDirty.remove();
-            for (Iterator<SimpleCache.CacheKey> iterator = lst.iterator(); iterator.hasNext(); ) {
-                SimpleCache.CacheKey key = iterator.next();
+            for (Iterator<ObjectCacheKey> iterator = lst.iterator(); iterator.hasNext(); ) {
+                ObjectCacheKey key = iterator.next();
                 xMemCache.setRaw(Constants.CACHE_UPDATING_PREFIX + key.region, key.key, System.currentTimeMillis() , 1);
                 if (logger.isDebugEnabled())
                     logger.debug("txClean, mark key dirty:" + key.region + ", " + key.key);
             }
             es.schedule(() -> {
-                for (Iterator<SimpleCache.CacheKey> iterator = lst.iterator(); iterator.hasNext(); ) {
-                    SimpleCache.CacheKey key = iterator.next();
+                for (Iterator<ObjectCacheKey> iterator = lst.iterator(); iterator.hasNext(); ) {
+                    ObjectCacheKey key = iterator.next();
                     xMemCache.deleteKey(key.region, key.key);
                     processDirty.remove(key);
                     if (logger.isDebugEnabled())

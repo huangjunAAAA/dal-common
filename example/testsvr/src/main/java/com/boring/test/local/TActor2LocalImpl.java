@@ -1,10 +1,10 @@
 package com.boring.test.local;
 
-import java.util.*;
 import com.boring.dal.cache.ComprehensiveDao;
-import com.boring.dal.test.model.TActor2;
-import javax.annotation.Resource;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 @Component
 public class TActor2LocalImpl{
@@ -37,13 +37,13 @@ public class TActor2LocalImpl{
         return batchSave(objLst);
     }
     
+
     
+
     
+
     
+
     
-    
-    
-    
-    
-    
+
 }

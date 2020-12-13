@@ -1,6 +1,7 @@
 package com.boring.dal.cache;
 
-import java.util.Arrays;
+import com.boring.dal.cache.construct.VersionedValue;
+
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -17,6 +18,18 @@ public interface SimpleCache {
 
     void setEntity(String key, Object obj, int expire);
 
+    <T> VersionedValue<T> getVersionedObject(String region, String key, Supplier<T> supplier);
+
+    <T> VersionedValue<T> getVersionedObject(String region, String key, Class<T> tClass);
+
+    <T> VersionedValue<T> getVersionedEntity(String key, Class<T> tClass);
+
+    boolean setVersionedEntity(String key, VersionedValue obj);
+
+    boolean setVersionedEntity(String key, VersionedValue obj, int expire);
+
+    boolean setVersionedRaw(String region, String key, VersionedValue content, int expire);
+
     void setRaw(String region, String key, Object content, int expire);
 
     long incr(String region, String key, long delta);
@@ -29,25 +42,4 @@ public interface SimpleCache {
 
     void setIfNotPresent(String region,String key, Object content, int expire);
 
-    class CacheKey {
-        public final String region;
-        public final String key;
-        public CacheKey(String region, String key) {
-            this.region = region;
-            this.key = key;
-        }
-
-        @Override
-        public int hashCode() {
-            return region.hashCode() + key.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof CacheKey))
-                return false;
-            CacheKey cacheKey = (CacheKey) obj;
-            return Arrays.equals(new String[]{region, key}, new String[]{cacheKey.region, cacheKey.key});
-        }
-    }
 }

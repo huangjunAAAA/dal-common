@@ -7,6 +7,7 @@ import java.util.List;
 public class AutoMethodDef {
     public String methodName;
     public String returnClass;
+    public String pType;
     public LinkedHashMap<String,Class> params=new LinkedHashMap<>();
     public List<String> exceptions=new ArrayList<>();
 

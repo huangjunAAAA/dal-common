@@ -1,5 +1,6 @@
 package com.boring.dal.cache;
 
+import com.boring.dal.cache.construct.VersionedValue;
 import com.boring.dal.config.DataEntry;
 
 import java.util.List;
@@ -13,12 +14,13 @@ public interface RealmCache {
 
     int inspectList(DataEntry de, String key);
 
-    int inspectEntity(Object id, Class clazz);
-
     void setListData(String listName, String key, Object data);
 
     <T> T getListData(String listName, String key, Supplier<T> s);
 
+    boolean setVersionedListData(String listName, String key, VersionedValue data);
+
+    <T> VersionedValue<T> getVersionedListData(String listName, String key, Supplier<T> s);
 
     <T> T getEntity(String id, Class<T> tClass);
 

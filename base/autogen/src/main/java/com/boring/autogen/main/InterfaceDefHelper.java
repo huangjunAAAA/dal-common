@@ -3,6 +3,7 @@ package com.boring.autogen.main;
 import com.boring.autogen.model.AutoGenConfig;
 import com.boring.autogen.model.AutoInterfaceDef;
 import com.boring.autogen.model.AutoMethodDef;
+import com.boring.autogen.model.AutoReturnDef;
 import com.boring.dal.config.Constants;
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.config.DataEntry;
@@ -14,7 +15,7 @@ import java.util.*;
 @Component
 public class InterfaceDefHelper {
 
-    public AutoInterfaceDef buildInterfaceDefinitionfromClass(DataAccessConfig config, Class<?> tclass, AutoGenConfig.AGCfg autoGenConfig){
+    public AutoInterfaceDef buildInterfaceDefinitionfromClass(DataAccessConfig config, Class<?> tclass, AutoGenConfig.AGCfg autoGenConfig, HashMap<String, AutoReturnDef> rtmap){
         AutoInterfaceDef target=new AutoInterfaceDef();
         target.pkgName=autoGenConfig.output.pkg;
         target.fileName=tclass.getSimpleName()+autoGenConfig.ending;
@@ -70,12 +71,12 @@ public class InterfaceDefHelper {
             for (Iterator<DataEntry> iterator = delist.iterator(); iterator.hasNext(); ) {
                 DataEntry de = iterator.next();
                 if (de.getMode().equals(Constants.ITEM_MODE_LIST)) {
-                    List<AutoMethodDef> mlist = handleListItem(de, config);
+                    List<AutoMethodDef> mlist = handleListItem(de, rtmap);
                     target.methods.addAll(mlist);
                 }
 
                 if (de.getMode().equals(Constants.ITEM_MODE_MAP)) {
-                    List<AutoMethodDef> mlist = handleMapItem(de, config);
+                    List<AutoMethodDef> mlist = handleMapItem(de, rtmap);
                     target.methods.addAll(mlist);
                 }
             }
@@ -83,7 +84,7 @@ public class InterfaceDefHelper {
         return target;
     }
 
-    private List<AutoMethodDef> handleListItem(DataEntry de, DataAccessConfig config){
+    private List<AutoMethodDef> handleListItem(DataEntry de, HashMap<String, AutoReturnDef> rtmap){
         List<AutoMethodDef> ret=new ArrayList<>();
         // countList
         AutoMethodDef countList=new AutoMethodDef();
@@ -102,19 +103,23 @@ public class InterfaceDefHelper {
         ret.add(countList);
 
         // getDataListMulti
-        AutoMethodDef getDataMapMulti=new AutoMethodDef();
-        getDataMapMulti.params=new LinkedHashMap<>(countList.params);
-        getDataMapMulti.params.put("start",Integer.class);
-        getDataMapMulti.params.put("count",Integer.class);
+        AutoMethodDef getDataListMulti=new AutoMethodDef();
+        getDataListMulti.params=new LinkedHashMap<>(countList.params);
+        getDataListMulti.params.put("start",Integer.class);
+        getDataListMulti.params.put("count",Integer.class);
 
 
-        getDataMapMulti.returnClass="List<Object[]>";
-        getDataMapMulti.methodName="listAll"+handleMethodName(de.getName());
-        getDataMapMulti.exceptions.add(Exception.class.getName());
-        getDataMapMulti.remote="getDataListMulti";
-        getDataMapMulti.targetList=de.getName();
-        if(de.getValueProperties().size()>1)
-            ret.add(getDataMapMulti);
+
+        getDataListMulti.methodName="listAll"+handleMethodName(de.getName());
+        getDataListMulti.exceptions.add(Exception.class.getName());
+        getDataListMulti.remote="getDataListMulti";
+        getDataListMulti.targetList=de.getName();
+        if(de.getValueProperties().size()>1){
+            AutoReturnDef rt = rtmap.get(de.getName());
+            getDataListMulti.returnClass="List<"+rt.className+">";
+            getDataListMulti.pType=rt.className;
+            ret.add(getDataListMulti);
+        }
 
         // getDataListSingle
         LinkedHashMap<String, Class> vplist = de.getValueProperties();
@@ -129,14 +134,14 @@ public class InterfaceDefHelper {
             String[] p1=val.getKey().split("\\.");
             getDataMapSingle.methodName="list"+handleMethodName(de.getName())+"For"+p1[p1.length-1]+i;
             getDataMapSingle.returnClass="List<"+val.getValue().getTypeName()+">";
-            getDataMapSingle.params=getDataMapMulti.params;
+            getDataMapSingle.params=getDataListMulti.params;
             ret.add(getDataMapSingle);
         }
 
 
         // getDataListEntity
         AutoMethodDef getDataListEntity=new AutoMethodDef();
-        getDataListEntity.params=new LinkedHashMap<>(getDataMapMulti.params);
+        getDataListEntity.params=new LinkedHashMap<>(getDataListMulti.params);
         getDataListEntity.params.put("clazz",Class.class);
         getDataListEntity.returnClass="List";
         getDataListEntity.methodName="listEntity"+handleMethodName(de.getName());
@@ -148,7 +153,7 @@ public class InterfaceDefHelper {
         return ret;
     }
 
-    private List<AutoMethodDef> handleMapItem(DataEntry de, DataAccessConfig config){
+    private List<AutoMethodDef> handleMapItem(DataEntry de, HashMap<String, AutoReturnDef> rtmap){
         List<AutoMethodDef> ret=new ArrayList<>();
         // getDataMapMulti
         AutoMethodDef getDataMapMulti=new AutoMethodDef();
@@ -159,13 +164,16 @@ public class InterfaceDefHelper {
             String vName=var.getter.getName().replace("get","").toLowerCase()+i;
             getDataMapMulti.params.put(vName,var.getter.getReturnType());
         }
-        getDataMapMulti.returnClass="Object[]";
+
         getDataMapMulti.methodName="mapAll"+handleMethodName(de.getName());
         getDataMapMulti.exceptions.add(Exception.class.getName());
         getDataMapMulti.remote="getDataMapMulti";
         getDataMapMulti.targetList=de.getName();
-        if(de.getValueProperties().size()>1)
+        if(de.getValueProperties().size()>1){
+            AutoReturnDef rt = rtmap.get(de.getName());
+            getDataMapMulti.returnClass=rt.className;
             ret.add(getDataMapMulti);
+        }
 
         // getDataMapSingle
         LinkedHashMap<String, Class> vplist = de.getValueProperties();

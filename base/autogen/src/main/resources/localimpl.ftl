@@ -4,6 +4,7 @@ import java.util.*;
 import com.boring.dal.cache.ComprehensiveDao;
 import ${idf.entityClass.typeName};
 import javax.annotation.Resource;
+import ${idf.pkgName}.construct.*;
 import org.springframework.stereotype.Component;
 
 @Component

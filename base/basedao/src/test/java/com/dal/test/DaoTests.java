@@ -107,4 +107,9 @@ public class DaoTests {
         System.out.println(id1);
     }
 
+    @Test
+    public void testDel() throws Exception{
+        entityDao.delete(777,TActor.class.getTypeName());
+    }
+
 }
