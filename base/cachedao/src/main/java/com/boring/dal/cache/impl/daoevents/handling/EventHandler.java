@@ -4,5 +4,6 @@ public interface EventHandler {
     void handleEvent(EventContext env);
 
     String EVENT_NEWENTITYSAVED="NewEntitySaved";
-    String EVENT_UPDATEENTITY="EntityUpdated";
+    String EVENT_ENTITYUPDATED ="EntityUpdated";
+    String EVENT_ENTITYDELETED="EntityRemoved";
 }

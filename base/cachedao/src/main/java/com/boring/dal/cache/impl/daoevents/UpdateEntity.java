@@ -4,9 +4,9 @@ import com.boring.dal.cache.impl.daoevents.handling.EventContext;
 import com.boring.dal.cache.impl.daoevents.handling.EventHandler;
 import org.springframework.stereotype.Component;
 
-import static com.boring.dal.cache.impl.daoevents.handling.EventHandler.EVENT_UPDATEENTITY;
+import static com.boring.dal.cache.impl.daoevents.handling.EventHandler.EVENT_ENTITYUPDATED;
 
-@Component(EVENT_UPDATEENTITY)
+@Component(EVENT_ENTITYUPDATED)
 public class UpdateEntity implements EventHandler {
     @Override
     public void handleEvent(EventContext env) {

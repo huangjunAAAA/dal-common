@@ -1,9 +1,11 @@
 package com.boring.dal.cache.impl;
 
-import com.boring.dal.cache.CacheHelper;
-import com.boring.dal.cache.ComprehensiveDao;
-import com.boring.dal.cache.RealmCache;
-import com.boring.dal.cache.SimpleCache;
+import com.boring.dal.cache.*;
+import com.boring.dal.cache.impl.cache.EntityCacheFactory;
+import com.boring.dal.cache.impl.cache.ListCacheFactory;
+import com.boring.dal.cache.impl.daoevents.handling.EventContext;
+import com.boring.dal.cache.impl.daoevents.handling.EventHandler;
+import com.boring.dal.cache.impl.daoevents.handling.PostHandler;
 import com.boring.dal.config.Constants;
 import com.boring.dal.config.DalCached;
 import com.boring.dal.config.DataAccessConfig;
@@ -33,11 +35,17 @@ public class DaoFacade implements ComprehensiveDao {
     @Autowired
     private CollectionDao collectionDao;
 
-    @Autowired
-    private RealmCache realmCache;
-
     @Resource
     private DataAccessConfig dataAccessConfig;
+
+    @Resource
+    private EntityCacheFactory entityCacheFactory;
+
+    @Resource
+    private ListCacheFactory listCacheFactory;
+
+    @Resource
+    private PostHandler postHandler;
 
     @Autowired
     private CacheHelper cacheHelper;
@@ -103,43 +111,50 @@ public class DaoFacade implements ComprehensiveDao {
             logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", start:" + start + ", count:" + count );
 
         String key = cacheHelper.getDataEntryCacheKeyWithValue(listName, params);
-        int cachestatus = realmCache.inspectList(de, key);
+
+        ListCache<T> listCache=listCacheFactory.createListCache(de,key,true);
+        int cachestatus = listCache.inspect();
         if (logger.isDebugEnabled())
             logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache status:" + cachestatus);
         if (cachestatus != Constants.CACHE_CLEAN) {
             return dbget.apply(new FetchOp<T>(listName, params, start, count,  cachestatus == Constants.SLAVE_DIRTY));
         }
-        List<T> cached = realmCache.getListData(listName, key, ArrayList<T>::new);
+
+        int actualCount = countDataList(listName, params);
+        if (start >= actualCount)
+            return new ArrayList<>();
         int toIndex = start + count;
-        if (cached != null && cached.size() > 0) {
-            if (cached.size() >= start + count) {
-                if (logger.isDebugEnabled())
-                    logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache hit.");
-                return subList(cached, start, toIndex);
-            }
-            int actualCount = countDataList(listName, params);
-            if (start >= actualCount)
-                return new ArrayList<>();
-            if (toIndex > actualCount)
-                toIndex = actualCount;
-            List<T> additional = dbget.apply(new FetchOp(listName, params, cached.size(), toIndex - cached.size(),  cachestatus == Constants.SLAVE_DIRTY));
-            cached.addAll(additional);
-            realmCache.setListData(listName, key, cached);
+        if (toIndex > actualCount)
+            toIndex = actualCount;
+        ListCache.RangeResult<T> cached = listCache.findRange(start, count);
+        if (cached.status==Constants.LISTCACHE_HIT) {
             if (logger.isDebugEnabled())
-                logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache partial.");
-            return subList(cached, start, toIndex);
-        } else {
-            List<T> full = dbget.apply(new FetchOp(listName, params, 0, toIndex,  cachestatus == Constants.SLAVE_DIRTY));
-            realmCache.setListData(listName, key, full);
+                logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache hit.");
+            return new ArrayList<>(cached.actual);
+        }
+
+        if (cached.status==Constants.LISTCACHE_MISS){
+            List<T> full = dbget.apply(new FetchOp(listName, params, start, toIndex,  cachestatus == Constants.SLAVE_DIRTY));
             if (logger.isDebugEnabled())
                 logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache empty.");
-            int actualCount = countDataList(listName, params);
-            if (start >= actualCount)
-                return new ArrayList<>();
-            if (toIndex > actualCount)
-                toIndex = actualCount;
-            return subList(full, start, toIndex);
+            listCache.merge(start,toIndex,full);
+            return full;
         }
+
+        if(cached.status==Constants.LISTCACHE_LEFTHIT){
+            List<T> right = dbget.apply(new FetchOp(listName, params, cached.actual.size()+start, toIndex,  cachestatus == Constants.SLAVE_DIRTY));
+            ArrayList<T> ret = new ArrayList<>(cached.actual);
+            ret.addAll(right);
+            return ret;
+        }
+        if(cached.status==Constants.LISTCACHE_RIGHTHIT){
+            List<T> left = dbget.apply(new FetchOp(listName, params, start, toIndex-cached.actual.size(),  cachestatus == Constants.SLAVE_DIRTY));
+            ArrayList<T> ret = new ArrayList<>(left);
+            ret.addAll(cached.actual);
+            return ret;
+        }
+        logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache malformed: "+cached.status);
+        return null;
     }
 
     @Override
@@ -162,16 +177,18 @@ public class DaoFacade implements ComprehensiveDao {
             return getter.apply(fetchOp);
         }
         String key = keyGen.apply(fetchOp);
-        int cachestatus = realmCache.inspectList(de, key);
+        EntityCache<T> entityCache = entityCacheFactory.createEntityCache(de.getName(), key, false);
+
+        int cachestatus = entityCache.inspect();
         if (logger.isDebugEnabled())
             logger.debug("getCachedSingleData:" + listName + ", params:" + Arrays.toString(params) + ", cache status:" + cachestatus);
-        if (realmCache.inspectList(de, key) != Constants.CACHE_CLEAN) {
+        if (cachestatus != Constants.CACHE_CLEAN) {
             return getter.apply(new FetchOp<>(listName, params, null, null, cachestatus == Constants.SLAVE_DIRTY));
         }
-        T val = realmCache.getListData(listName, key, () -> null);
+        T val = entityCache.get();
         if (val == null) {
             val = getter.apply(new FetchOp<>(listName, params, null, null, cachestatus == Constants.SLAVE_DIRTY));
-            realmCache.setListData(listName, key, val);
+            entityCache.updateIfAbsent(val);
             if (logger.isDebugEnabled())
                 logger.debug("getCachedSingleData:" + listName + ", params:" + Arrays.toString(params) + ", cache empty.");
         } else {
@@ -235,14 +252,15 @@ public class DaoFacade implements ComprehensiveDao {
         if (clazz.getAnnotation(DalCached.class) == null)
             return entityDao.get(id, clazz);
 
-        T obj = realmCache.getEntity(id.toString(), clazz);
+        EntityCache<T> entityCache = entityCacheFactory.createEntityCache(clazz.getTypeName(), id.toString(), true);
+        T obj = entityCache.get();
         if (obj == SimpleCache.NullObject) {
             if (logger.isDebugEnabled()) logger.debug("get:" + id + ", class:" + clazz.getTypeName() + ", cache null.");
             return null;
         }
         if (obj == null) {
             obj = entityDao.get(id, clazz);
-            realmCache.updateEntityIfNotPresent(id.toString(), obj);
+            entityCache.updateIfAbsent(obj);
             if (logger.isDebugEnabled())
                 logger.debug("get:" + id + ", class:" + clazz.getTypeName() + ", cache empty.");
         } else {
@@ -265,7 +283,7 @@ public class DaoFacade implements ComprehensiveDao {
             throw new Exception("Object not loaded:" + obj.getClass());
         }
         Object id = entityDao.save(obj);
-        realmCache.saveNewEntity(id.toString(), obj);
+        postHandler.handleEvent(EventHandler.EVENT_NEWENTITYSAVED,new EventContext(id,obj,null));
         return id;
     }
 
@@ -278,7 +296,7 @@ public class DaoFacade implements ComprehensiveDao {
         Object id = cacheHelper.getObjectIdVal(obj);
         Object oldObj = get(id, obj.getClass());
         entityDao.update(obj);
-        realmCache.updateEntity(id.toString(), obj, oldObj);
+        postHandler.handleEvent(EventHandler.EVENT_ENTITYUPDATED,new EventContext(id,obj,oldObj));
     }
 
     public List batchSave(List objList) throws Exception {
@@ -288,15 +306,16 @@ public class DaoFacade implements ComprehensiveDao {
         for (int i = 0; i < objList.size(); i++) {
             Object obj = objList.get(i);
             Serializable id = idList.get(i);
-            realmCache.saveNewEntity(id.toString(), obj);
+            postHandler.handleEvent(EventHandler.EVENT_NEWENTITYSAVED,new EventContext(id,obj,null));
         }
         return idList;
     }
 
     @Override
     public void delete(Object id, String clazz) throws Exception {
+        Object oldObj = get(id, clazz);
         entityDao.delete(id, clazz);
-        realmCache.invalidateEntity(id, clazz);
+        postHandler.handleEvent(EventHandler.EVENT_NEWENTITYSAVED,new EventContext(id,null,oldObj));
     }
 
     @Override
@@ -305,14 +324,18 @@ public class DaoFacade implements ComprehensiveDao {
             return entityDao.batchGet(idList, clazz);
 
         int nullnum = 0;
-        List<T> ret = realmCache.batchGetEntity(clazz, idList);
+        BatchEntityCache<T> batchCache = entityCacheFactory.createBatchCache(clazz.getTypeName(), idList, true);
         int cserved=0;
         ArrayList idremains = new ArrayList();
-        for (int i = 0; i < ret.size(); i++) {
-            T val = ret.get(i);
+        List<EntityCache<T>> cachelist = batchCache.get();
+        ArrayList<T> ret=new ArrayList<>(idList.size());
+        for (int i = 0; i < cachelist.size(); i++) {
+            EntityCache<T> cache = cachelist.get(i);
+            T val=cache.get();
             if (val == null) {
                 idremains.add(idList.get(i));
             }else{
+                ret.set(i,val);
                 cserved++;
             }
         }
@@ -324,7 +347,8 @@ public class DaoFacade implements ComprehensiveDao {
                 val = rest.remove(0);
             }
             if (val != null) {
-                realmCache.updateEntity(idList.get(i).toString(), val, null);
+                EntityCache<T> cache = batchCache.getByKey(idList.get(i).toString());
+                cache.updateIfAbsent(val);
             } else
                 nullnum++;
             ret.set(i, val);

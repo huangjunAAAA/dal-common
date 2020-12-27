@@ -32,4 +32,9 @@ public class Constants {
     public static final int CACHE_CLEAN = 0;
     public static final int CACHE_DIRTY = 1;
     public static final int SLAVE_DIRTY = 2;
+
+    public static final int LISTCACHE_HIT = 0;
+    public static final int LISTCACHE_MISS = -1;
+    public static final int LISTCACHE_LEFTHIT = 1;
+    public static final int LISTCACHE_RIGHTHIT = 2;
 }
