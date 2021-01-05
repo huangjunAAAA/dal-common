@@ -1,4 +1,4 @@
-package com.boring.dal.dao.impl;
+package com.boring.dal.dao.impl.hibernate;
 
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.dao.EntityDao;
@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.persistence.Column;
+import javax.persistence.Query;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@Component()
+@Component
 @Transactional(propagation = Propagation.REQUIRED)
 public class HibernateEntityImpl implements EntityDao {
 
@@ -99,7 +100,16 @@ public class HibernateEntityImpl implements EntityDao {
     @Override
     public void delete(Object id, String clazz) throws Exception {
         Session ses = sessionFactory.getCurrentSession();
-        ses.delete(clazz, id);
+        Class cls= Class.forName(clazz);
+        Table table = (Table) cls.getAnnotation(Table.class);
+        Field idfield = dataAccessConfig.getEntityIdField(cls);
+        Column idcol = idfield.getAnnotation(Column.class);
+        String col = StringUtils.isEmpty(idcol.name()) ? idfield.getName() : idcol.name();
+        if(idfield!=null){
+            NativeQuery del = ses.createNativeQuery("delete from " + table.name() + " where " + col + "= :p0");
+            del.setParameter("p0",id);
+            del.executeUpdate();
+        }
     }
 
     @Override
@@ -110,7 +120,7 @@ public class HibernateEntityImpl implements EntityDao {
         Field idfield = dataAccessConfig.getEntityIdField(clazz);
         Column id = idfield.getAnnotation(Column.class);
         String col = StringUtils.isEmpty(id.name()) ? idfield.getName() : id.name();
-        NativeQuery query = ses.createSQLQuery("select * from " + table.name() + " where " + col + " in (:p0)");
+        NativeQuery query = ses.createNativeQuery("select * from " + table.name() + " where " + col + " in (:p0)");
         query.addEntity(clazz);
         query.setParameter("p0", idList);
         List ret = query.list();

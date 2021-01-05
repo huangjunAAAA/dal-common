@@ -1,4 +1,4 @@
-package com.boring.dal.dao.impl;
+package com.boring.dal.dao.impl.hibernate;
 
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.config.DataEntry;

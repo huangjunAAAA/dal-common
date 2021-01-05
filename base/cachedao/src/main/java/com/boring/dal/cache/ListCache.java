@@ -8,6 +8,7 @@ public interface ListCache<T> {
     void flush();
     boolean merge(int start, int end, List<T> part);
     RangeResult<T> findRange(Integer start, Integer count);
+    void delete();
 
     class RangeResult<T>{
         /**

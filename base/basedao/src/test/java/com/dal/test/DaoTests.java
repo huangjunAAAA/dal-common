@@ -3,16 +3,16 @@ package com.dal.test;
 
 import com.boring.dal.ConfigConf;
 import com.boring.dal.config.DataAccessConfig;
-import com.boring.dal.dao.CollectionDao;
-import com.boring.dal.dao.EntityDao;
-import com.boring.dal.dao.HibernateConf;
-import com.boring.dal.dao.impl.HibernateCollectionImpl;
-import com.boring.dal.dao.impl.HibernateEntityImpl;
+import com.boring.dal.dao.*;
+import com.boring.dal.dao.impl.hibernate.HibernateCollectionImpl;
+import com.boring.dal.dao.impl.hibernate.HibernateConf;
+import com.boring.dal.dao.impl.hibernate.HibernateEntityImpl;
 import com.dal.test.model.TActor;
 import org.apache.shardingsphere.core.yaml.config.masterslave.YamlRootMasterSlaveConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -24,8 +24,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {ConfigConf.class, HibernateConf.class, HibernateEntityImpl.class, HibernateCollectionImpl.class, HibernateJpaAutoConfiguration.class})
+@EntityScan("com.dal")
+@ContextConfiguration(classes = {TActor.class,ConfigConf.class, DataSourceConf.class, HibernateConf.class,HibernateEntityImpl.class, HibernateCollectionImpl.class, HibernateJpaAutoConfiguration.class})
 public class DaoTests {
 
 

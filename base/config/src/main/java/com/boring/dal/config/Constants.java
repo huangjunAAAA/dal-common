@@ -26,8 +26,9 @@ public class Constants {
     public static final String ITEM_MODE_LIST="list";
     public static final String ITEM_MODE_MAP="map";
 
-    public static final String CACHE_UPDATING_PREFIX = "DirtyCheck_";
-    public static final String MAXID_KEY = "MaxId";
+    public static final String CACHE_UPDATING_PREFIX = "DirtyCheck:";
+    public static final String MAXID_KEY = ":MaxId";
+    public static final String VERSIONED = "Versioned:";
 
     public static final int CACHE_CLEAN = 0;
     public static final int CACHE_DIRTY = 1;
@@ -37,4 +38,5 @@ public class Constants {
     public static final int LISTCACHE_MISS = -1;
     public static final int LISTCACHE_LEFTHIT = 1;
     public static final int LISTCACHE_RIGHTHIT = 2;
+    public static String NullObject="null_obj";
 }

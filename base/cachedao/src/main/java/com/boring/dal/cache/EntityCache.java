@@ -7,4 +7,6 @@ public interface EntityCache<T> {
     T get();
     void update(T val);
     boolean updateIfAbsent(T val);
+    void delete();
+    void setMaxID(Object id);
 }

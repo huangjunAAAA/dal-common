@@ -3,7 +3,7 @@ dataSources:
     driverClassName: com.mysql.jdbc.Driver
     url: jdbc:mysql://localhost:3306/sakila?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
     username: root
-    password: k8st
+    password: mxcx5885
     initialSize: 5
     minIdle: 5
     maxActive: 50
@@ -17,7 +17,7 @@ dataSources:
     driverClassName: com.mysql.jdbc.Driver
     url: jdbc:mysql://localhost:3306/sakila?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
     username: root
-    password: k8st
+    password: mxcx5885
     initialSize: 5
     minIdle: 5
     maxActive: 50
@@ -31,7 +31,7 @@ dataSources:
     driverClassName: com.mysql.jdbc.Driver
     url: jdbc:mysql://localhost:3306/sakila?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
     username: root
-    password: k8st
+    password: mxcx5885
     initialSize: 5
     minIdle: 5
     maxActive: 50

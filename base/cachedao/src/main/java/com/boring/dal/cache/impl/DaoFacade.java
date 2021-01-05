@@ -14,6 +14,7 @@ import com.boring.dal.dao.CollectionDao;
 import com.boring.dal.dao.EntityDao;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.aspectj.weaver.tools.cache.SimpleCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -49,12 +50,6 @@ public class DaoFacade implements ComprehensiveDao {
 
     @Autowired
     private CacheHelper cacheHelper;
-
-    private static List subList(List list, int start, int toIndex) {
-        if (start == 0 && toIndex == list.size() - 1)
-            return list;
-        return new ArrayList(list.subList(start, toIndex));
-    }
 
     @Override
     public List<Object[]> getDataListMulti(String listName, Object[] params, Integer start, Integer count) throws Exception {
@@ -142,15 +137,19 @@ public class DaoFacade implements ComprehensiveDao {
         }
 
         if(cached.status==Constants.LISTCACHE_LEFTHIT){
-            List<T> right = dbget.apply(new FetchOp(listName, params, cached.actual.size()+start, toIndex,  cachestatus == Constants.SLAVE_DIRTY));
+            int s1=cached.actual.size()+start;
+            List<T> right = dbget.apply(new FetchOp(listName, params, s1, toIndex-s1,  cachestatus == Constants.SLAVE_DIRTY));
             ArrayList<T> ret = new ArrayList<>(cached.actual);
             ret.addAll(right);
+            listCache.merge(s1,toIndex,ret);
             return ret;
         }
         if(cached.status==Constants.LISTCACHE_RIGHTHIT){
-            List<T> left = dbget.apply(new FetchOp(listName, params, start, toIndex-cached.actual.size(),  cachestatus == Constants.SLAVE_DIRTY));
+            int c1=toIndex-start-cached.actual.size();
+            List<T> left = dbget.apply(new FetchOp(listName, params, start, c1,  cachestatus == Constants.SLAVE_DIRTY));
             ArrayList<T> ret = new ArrayList<>(left);
             ret.addAll(cached.actual);
+            listCache.merge(start,toIndex-cached.actual.size(),ret);
             return ret;
         }
         logger.debug("getCachedDataList:" + listName + ", params:" + Arrays.toString(params) + ", cache malformed: "+cached.status);
@@ -254,7 +253,7 @@ public class DaoFacade implements ComprehensiveDao {
 
         EntityCache<T> entityCache = entityCacheFactory.createEntityCache(clazz.getTypeName(), id.toString(), true);
         T obj = entityCache.get();
-        if (obj == SimpleCache.NullObject) {
+        if (obj == Constants.NullObject) {
             if (logger.isDebugEnabled()) logger.debug("get:" + id + ", class:" + clazz.getTypeName() + ", cache null.");
             return null;
         }

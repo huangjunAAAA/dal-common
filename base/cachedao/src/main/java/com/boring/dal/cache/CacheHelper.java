@@ -1,10 +1,13 @@
 package com.boring.dal.cache;
 
+import com.boring.dal.cache.sanitizer.KeySanitizer;
+import com.boring.dal.config.Constants;
 import com.boring.dal.config.DataAccessConfig;
 import com.boring.dal.config.DataEntry;
 import com.boring.dal.config.SQLVarInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -17,10 +20,17 @@ import static com.boring.dal.config.Constants.*;
 
 @Component
 public class CacheHelper {
+
+
     private static final Logger logger = LogManager.getLogger("DAO");
 
     @Resource
     private DataAccessConfig dataAccessConfig;
+
+    @Autowired
+    private KeySanitizer keySanitizer;
+
+    private static final String delimiter=":";
 
     public Object getObjectIdVal(Object obj) {
         Method getter = dataAccessConfig.getEntityIdValGetter(obj);
@@ -147,4 +157,14 @@ public class CacheHelper {
         String k = keypattern.toString();
         return k;
     }
+
+    public String getRegionKey(String region,String key){
+        return region.replaceAll("\\.",delimiter)+delimiter+keySanitizer.sanitize(key);
+    }
+
+    public void checkKeySanity(String key){
+        if(key.contains(Constants.KEY_PLACEHOLDER))
+            throw new RuntimeException("key is ambiguous:"+key);
+    }
+
 }
