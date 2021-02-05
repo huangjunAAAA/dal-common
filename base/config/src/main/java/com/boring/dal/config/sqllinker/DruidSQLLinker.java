@@ -185,6 +185,8 @@ public class DruidSQLLinker implements FieldSQLConnector {
         }
     }
 
+
+
     public ArrayList<String> getColumnFromCondition(TableConditionExt c) {
         ArrayList<String> cols = new ArrayList<>();
         if (c.getOperator().equals(SQLBinaryOperator.Is.name) || c.getOperator().equals(SQLBinaryOperator.IsNot.name))
@@ -192,31 +194,33 @@ public class DruidSQLLinker implements FieldSQLConnector {
         boolean inSupport = c.getOperator().equalsIgnoreCase("IN") || c.getOperator().equalsIgnoreCase("NOT IN");
         for (Iterator<SQLObject> iterator = c.getExprs().iterator(); iterator.hasNext(); ) {
             SQLObject so = iterator.next();
-            if(isVariant(so) ){
+            int count = isVariant(so);
+            for (int i = 0; i < count; i++) {
                 cols.add(c.getColumn().getTable() + "." + c.getColumn().getName() + (inSupport ? "[]" : ""));
             }
         }
         return cols;
     }
 
-    private boolean isVariant(SQLObject so){
+    private int isVariant(SQLObject so){
         if(so instanceof SQLVariantRefExpr)
-            return true;
+            return 1;
         else if(so instanceof SQLBinaryOpExpr){
             SQLBinaryOpExpr binOp= (SQLBinaryOpExpr) so;
-            return isVariant(binOp.getRight()) || isVariant(binOp.getLeft());
+            return isVariant(binOp.getRight()) + isVariant(binOp.getLeft());
         }else if(so instanceof SQLBetweenExpr){
             SQLBetweenExpr betweenExpr= (SQLBetweenExpr) so;
-            return isVariant(betweenExpr.getBeginExpr()) || isVariant(betweenExpr.getEndExpr());
+            return isVariant(betweenExpr.getBeginExpr()) + isVariant(betweenExpr.getEndExpr());
         }else if(so instanceof SQLInListExpr){
             SQLInListExpr sqlInListExpr= (SQLInListExpr) so;
+            int inVarNum=0;
             for (Iterator<SQLExpr> iterator = sqlInListExpr.getTargetList().iterator(); iterator.hasNext(); ) {
                 SQLExpr expr = iterator.next();
-                if(isVariant(expr))
-                    return true;
+                inVarNum=inVarNum+isVariant(expr);
             }
+            return inVarNum;
         }
-        return false;
+        return 0;
     }
 
     private List<String> getValueColumnList(SQLSelectStatement stmt, String anyTable) {
