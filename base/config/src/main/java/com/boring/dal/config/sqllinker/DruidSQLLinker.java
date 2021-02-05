@@ -185,18 +185,38 @@ public class DruidSQLLinker implements FieldSQLConnector {
         }
     }
 
-    public ArrayList<String> getColumnFromCondition(TableStat.Condition c) {
+    public ArrayList<String> getColumnFromCondition(TableConditionExt c) {
         ArrayList<String> cols = new ArrayList<>();
         if (c.getOperator().equals(SQLBinaryOperator.Is.name) || c.getOperator().equals(SQLBinaryOperator.IsNot.name))
             return cols;
         boolean inSupport = c.getOperator().equalsIgnoreCase("IN") || c.getOperator().equalsIgnoreCase("NOT IN");
-        for (Iterator<Object> iterator = c.getValues().iterator(); iterator.hasNext(); ) {
-            Object n = iterator.next();
-            if (n == null) {
+        for (Iterator<SQLObject> iterator = c.getExprs().iterator(); iterator.hasNext(); ) {
+            SQLObject so = iterator.next();
+            if(isVariant(so) ){
                 cols.add(c.getColumn().getTable() + "." + c.getColumn().getName() + (inSupport ? "[]" : ""));
             }
         }
         return cols;
+    }
+
+    private boolean isVariant(SQLObject so){
+        if(so instanceof SQLVariantRefExpr)
+            return true;
+        else if(so instanceof SQLBinaryOpExpr){
+            SQLBinaryOpExpr binOp= (SQLBinaryOpExpr) so;
+            return isVariant(binOp.getRight()) || isVariant(binOp.getLeft());
+        }else if(so instanceof SQLBetweenExpr){
+            SQLBetweenExpr betweenExpr= (SQLBetweenExpr) so;
+            return isVariant(betweenExpr.getBeginExpr()) || isVariant(betweenExpr.getEndExpr());
+        }else if(so instanceof SQLInListExpr){
+            SQLInListExpr sqlInListExpr= (SQLInListExpr) so;
+            for (Iterator<SQLExpr> iterator = sqlInListExpr.getTargetList().iterator(); iterator.hasNext(); ) {
+                SQLExpr expr = iterator.next();
+                if(isVariant(expr))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private List<String> getValueColumnList(SQLSelectStatement stmt, String anyTable) {

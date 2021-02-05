@@ -36,6 +36,7 @@ import com.alibaba.druid.stat.TableStat.Column;
 import com.alibaba.druid.stat.TableStat.Mode;
 import com.alibaba.druid.stat.TableStat.Relationship;
 import com.alibaba.druid.util.FnvHash;
+import com.boring.dal.config.Constants;
 
 import java.util.*;
 import java.util.function.Function;
