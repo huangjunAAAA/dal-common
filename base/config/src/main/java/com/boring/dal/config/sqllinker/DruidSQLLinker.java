@@ -1,5 +1,6 @@
 package com.boring.dal.config.sqllinker;
 
+import com.alibaba.druid.DbType;
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
@@ -12,12 +13,13 @@ import com.alibaba.druid.sql.visitor.SchemaStatVisitor;
 import com.alibaba.druid.stat.TableStat;
 import com.alibaba.druid.util.JdbcConstants;
 import com.boring.dal.config.Constants;
-import com.boring.dal.config.ObjectUtil;
 import com.boring.dal.config.DataEntry;
+import com.boring.dal.config.ObjectUtil;
 import com.boring.dal.config.SQLVarInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.lang.NonNull;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,11 +27,12 @@ import javax.persistence.Table;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.Function;
 
 public class DruidSQLLinker implements FieldSQLConnector {
 
     private static Logger logger = LogManager.getLogger("DAO");
+
+    private DbType sqlType= DbType.mysql;
 
     private Map<String, Map<String, Method>> clsmap = new HashMap<>();
 
@@ -53,12 +56,18 @@ public class DruidSQLLinker implements FieldSQLConnector {
         System.out.println(ocols);
     }
 
+    public DruidSQLLinker(){
+
+    }
+    public DruidSQLLinker(@NonNull DbType dbType){
+        this.sqlType=dbType;
+    }
     @Override
     public void linkDataEntry(DataEntry de, List<Class> clazz) {
         SQLSelectStatement stmt = null;
         String sqlitem = de.getSql();
         try {
-            stmt = (SQLSelectStatement) SQLUtils.parseStatements(sqlitem, JdbcConstants.MYSQL).get(0);
+            stmt = (SQLSelectStatement) SQLUtils.parseStatements(sqlitem, sqlType).get(0);
         } catch (ParserException e) {
             logger.fatal("unable to parse sql:" + sqlitem);
             return;
@@ -208,7 +217,7 @@ public class DruidSQLLinker implements FieldSQLConnector {
     }
 
     public List<String> getTables(SQLSelectStatement stmt) {
-        SchemaStatVisitor v = SQLUtils.createSchemaStatVisitor(JdbcConstants.MYSQL);
+        SchemaStatVisitor v = SQLUtils.createSchemaStatVisitor(sqlType);
         stmt.accept(v);
         List<String> ret = new ArrayList<>();
         Map<TableStat.Name, TableStat> tables = v.getTables();
@@ -297,19 +306,19 @@ public class DruidSQLLinker implements FieldSQLConnector {
         for (Iterator<TableStat.Column> iterator = orderby.iterator(); iterator.hasNext(); ) {
             TableStat.Column c = iterator.next();
             String lw = c.toString();
-            lw = lw.replace(Constants.UNKNOWN_TABLE2, anyt);
+            lw = lw.replace(Constants.UNKNOWN_TABLE, anyt);
             ret.add(lw);
         }
         return ret;
     }
 
     public List<String> getConditionedColumnList(SQLSelectStatement stmt, String anyTable) {
-        SchemaStatVisitor v = SQLUtils.createSchemaStatVisitor(JdbcConstants.MYSQL);
+        SchemaStatVisitorExt v = SchemaStatVisitorExt.createSchemaStatVisitorExt(sqlType);
         stmt.accept(v);
         ArrayList<String> ret = new ArrayList<>();
-        List<TableStat.Condition> cs = v.getConditions();
-        for (Iterator<TableStat.Condition> iterator = cs.iterator(); iterator.hasNext(); ) {
-            TableStat.Condition c = iterator.next();
+        List<TableConditionExt> cs = v.getConditions();
+        for (Iterator<TableConditionExt> iterator = cs.iterator(); iterator.hasNext(); ) {
+            TableConditionExt c = iterator.next();
             ArrayList<String> l = getColumnFromCondition(c);
             for (Iterator<String> stringIterator = l.iterator(); stringIterator.hasNext(); ) {
                 String lw = stringIterator.next();
@@ -317,64 +326,7 @@ public class DruidSQLLinker implements FieldSQLConnector {
                 ret.add(lw);
             }
         }
-        List<SQLMethodInvokeExpr> funcs = v.getFunctions();
-        for (Iterator<SQLMethodInvokeExpr> iterator = funcs.iterator(); iterator.hasNext(); ) {
-            SQLMethodInvokeExpr s = iterator.next();
-            if (s.getParent() instanceof SQLMethodInvokeExpr || s.getParent() instanceof SQLSelectItem)
-                continue;
-            String variant = findArgumentColumn(s, new HashMap<>(), se -> {
-                if (se instanceof SQLVariantRefExpr) {
-                    return "";
-                }
-                return null;
-            });
-            if (variant == null)
-                continue;
-
-            String f = findArgumentColumn(s, new HashMap<>(), se -> {
-                if (se instanceof SQLPropertyExpr) {
-                    SQLPropertyExpr s1 = (SQLPropertyExpr) se;
-                    SQLObject from = s1.getResolvedOwnerObject();
-                    if (from != null) {
-                        return (s1.getResolvedOwnerObject() + "." + s1.getName());
-                    } else {
-                        return anyTable + Constants.TYPE_DELIMITER + s1.getName();
-                    }
-                }
-                return null;
-            });
-            if (f != null)
-                ret.add(f + Constants.TYPE_DELIMITER + s.getMethodName());
-            else
-                ret.add(Constants.ANY_FUNC + Constants.TYPE_DELIMITER + s.getMethodName());
-        }
         return ret;
     }
-
-    private String findArgumentColumn(SQLObject se, Map<Object, Object> processed, Function<SQLObject, String> end) {
-        if (se == null)
-            return null;
-        if (processed.containsKey(se))
-            return null;
-        processed.put(se, new Object());
-        String ret = end.apply(se);
-        if (ret != null)
-            return ret;
-
-
-        SQLObject p = se.getParent();
-        if (p instanceof SQLBinaryOpExpr) {
-            SQLBinaryOpExpr be = (SQLBinaryOpExpr) p;
-            String lr = findArgumentColumn(be.getLeft(), processed, end);
-            if (lr != null)
-                return lr;
-            String rr = findArgumentColumn(be.getRight(), processed, end);
-            if (rr != null)
-                return rr;
-        }
-
-        return findArgumentColumn(p, processed, end);
-    }
-
 
 }
