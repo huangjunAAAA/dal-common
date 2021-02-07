@@ -61,7 +61,11 @@ public class RedisListCache implements ListCache {
     @Override
     public void delete() {
         String rkey=cacheHelper.getRegionKey(region,key);
-        redisTemplate.delete(rkey);
+        DefaultRedisScript lua=new DefaultRedisScript();
+        lua.setScriptSource(new ResourceScriptSource(new ClassPathResource("/com/boring/dal/cache/impl/lua/del_versioned_list.lua")));
+        List<String> keys = new ArrayList<>();
+        keys.add(rkey);
+        redisTemplate.execute(lua, keys);
     }
 
     @Override
@@ -75,7 +79,7 @@ public class RedisListCache implements ListCache {
         if(val==null){
             DefaultRedisScript lua=new DefaultRedisScript();
             lua.setResultType(Long.class);
-            lua.setScriptSource(new ResourceScriptSource(new ClassPathResource("/com/boring/dal/cache/impl/lua/set_empty_list.lua")));
+            lua.setScriptSource(new ResourceScriptSource(new ClassPathResource("/com/boring/dal/cache/impl/lua/add_versioned_list.lua")));
             List<String> keys = new ArrayList<>();
             keys.add(rkey);
             keys.add(start+"-"+end);

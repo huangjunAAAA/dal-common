@@ -27,7 +27,7 @@ import java.util.List;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {ConfigConf.class, HibernateConf.class,
         HibernateEntityImpl.class, HibernateCollectionImpl.class, DaoFacade.class,
-        CacheConf.class, RedisCache.class, CacheHelper.class, UrlEncodeSanitizer.class, ProcessCache.class,LettuceFactory.class})
+        CacheConf.class, RedisCache.class, CacheHelper.class, UrlEncodeSanitizer.class,LettuceFactory.class})
 public class CacheTests {
 
 
