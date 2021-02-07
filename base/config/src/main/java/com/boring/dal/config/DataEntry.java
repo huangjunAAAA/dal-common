@@ -9,6 +9,7 @@ public class DataEntry {
     private String sql;
     private String mode;
     private String cache = Constants.CACHE_MODE_NONE;
+    private boolean namedParam;
 
     private LinkedList<SQLVarInfo> keyProperties;
 
@@ -80,5 +81,13 @@ public class DataEntry {
 
     public void setOrderByProperties(LinkedList<Method> orderByProperties) {
         this.orderByProperties = orderByProperties;
+    }
+
+    public boolean isNamedParam() {
+        return namedParam;
+    }
+
+    public void setNamedParam(boolean namedParam) {
+        this.namedParam = namedParam;
     }
 }
